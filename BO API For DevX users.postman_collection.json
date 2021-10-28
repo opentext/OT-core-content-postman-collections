@@ -1,0 +1,384 @@
+{
+	"info": {
+		"_postman_id": "93f2aa97-be8b-43f0-99ca-a2ba50ef5bba",
+		"name": "BO API For DevX users",
+		"description": "# Overview\nThe Business Object API (BO API) collection provides examples for using the Core Content Businesss Object Service (ccbo).\n\nThis collection uses collection variables (see tab Variables).\n\n| Variable                      | Description                                        |\n|-------------------------------|----------------------------------------------------|\n| app_confclient_id             | Client Id of your Confidential Client Keys         |\n| app_confclient_secret         | Client Secret of your Confidential Client Keys     |\n| tenant_svcacc_uid             | Tenant service account user (usually email address) |\n| tenant_svcacc_pwd             | Corresponding password to tenant_svcacc_uid        |\n| tenant_id                     | Id of your tenant                                  |\n\nThe collection consists of these requests (see each request's documentation and the swagger for more details):\n- OAuth\n\n    - Obtains a token to be used on the rest of the requests.\n\n- Create/Update BOConfig\n\n    - Pushes a Business Object Configuration (BOConfig) to ccbo for storage.\n\n- Get BOConfigs\n\n    - Retrieves all the known BOConfigs.\n\n- Get BOConfig\n\n    - Retrieves a specific BOConfig.\n\n- Delete BOConfig\n\n    - Deletes a BOConfig.\n\n- Create/Update Workspaces\n\n    - Creates or updates workspaces for business objects.\n\n- Get Workspaces\n\n    - Retrieves the ids for workspaces.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "OAuth",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody)",
+							"pm.collectionVariables.set(\"access_token\", jsonData.access_token)",
+							"console.log(pm.collectionVariables.get(\"access_token\"))"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "{{app_confclient_secret}}",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "{{app_confclient_id}}",
+							"type": "string"
+						},
+						{
+							"key": "saveHelperData",
+							"type": "any"
+						},
+						{
+							"key": "showPassword",
+							"value": false,
+							"type": "boolean"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded"
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "grant_type",
+							"value": "password",
+							"type": "text"
+						},
+						{
+							"key": "username",
+							"value": "{{tenant_svcacc_uid}}",
+							"type": "text"
+						},
+						{
+							"key": "password",
+							"value": "{{tenant_svcacc_pwd}}",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{token-endpoint}}/oauth2/token",
+					"host": [
+						"{{token-endpoint}}"
+					],
+					"path": [
+						"oauth2",
+						"token"
+					]
+				},
+				"description": "This request obtains an access token to be used with all the other requests in this collection.  It sets the collection variable **access_token** and depends on these collection variables:\n- token_endpoint\n- tenant_id\n- tenant_svcacc_uid\n- tenant_svcacc_pwd\n- app_confclient_id\n- app_confclient_secret"
+			},
+			"response": []
+		},
+		{
+			"name": "Create/Update BOConfig",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {
+					"accept": true
+				}
+			},
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/hal+json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"version\": 2,\r\n  \"externalSystem\": \"OvershoeInc\",\r\n  \"externalBusinessObjectType\": \"Overshoe\",\r\n  \"businessObjectConfigName\": \"OvershoeBO\",\r\n  \"businessObjectConfigLabel\": { \"en\" : \"Overshoe\" },\r\n  \"workspaceType\": \"overshoe_ws_omgz6\",\r\n  \"workspaceTypeTemplate\": [{ \"condition\": \"true\", \"templateId\": \"basic_structure_wk0ya\" }],\r\n  \"attributeMappingOverride\": [\r\n      {\r\n          \"WorkspaceAttribute\": \"creator_ev5ub\",\r\n          \"BusinessObjectAttribute\": \"CreatedBy\"\r\n      },\r\n      {\r\n          \"WorkspaceAttribute\": \"reviewer_tofht\",\r\n          \"BusinessObjectAttribute\": \"ReviewedBy\"\r\n      }\r\n  ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{bo-service-endpoint}}/api/v1/admin/boconfigs",
+					"host": [
+						"{{bo-service-endpoint}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"admin",
+						"boconfigs"
+					]
+				},
+				"description": "This request stores a Business Object Configuration into the Core Content system.\n\nBefore issuing this request, a workspace type must have been created and the system names of the workspace type, workspace type template, workspace type attributes, and workspace type roles identified for use in the BOConfig.\n\nThe name of the BOConfig is determined from the businessObjectConfigName and, if missing, defaults to the externalBusinessObjectType.\n\nIf a BOConfig of the same name exists, it is updated with this body."
+			},
+			"response": []
+		},
+		{
+			"name": "Get BOConfigs",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {
+					"accept": true
+				}
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/hal+json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{bo-service-endpoint}}/api/v1/admin/boconfigs",
+					"host": [
+						"{{bo-service-endpoint}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"admin",
+						"boconfigs"
+					],
+					"query": [
+						{
+							"key": "filter",
+							"value": "externalSystem eq 'OvershoeInc'",
+							"disabled": true
+						}
+					]
+				},
+				"description": "This request retrieves:\n\n- all the known BOConfigs\n\n- **OR** those matching the \"filter\" query parameter."
+			},
+			"response": []
+		},
+		{
+			"name": "Get BOConfig",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {
+					"accept": true
+				}
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/hal+json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{bo-service-endpoint}}/api/v1/admin/boconfigs/OvershoeBO",
+					"host": [
+						"{{bo-service-endpoint}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"admin",
+						"boconfigs",
+						"OvershoeBO"
+					]
+				},
+				"description": "This request retrieves the specified BOConfig."
+			},
+			"response": []
+		},
+		{
+			"name": "Delete BOConfig",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{bo-service-endpoint}}/api/v1/admin/boconfigs/OvershoeBO",
+					"host": [
+						"{{bo-service-endpoint}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"admin",
+						"boconfigs",
+						"OvershoeBO"
+					]
+				},
+				"description": "This request deletes the specified BOConfig."
+			},
+			"response": []
+		},
+		{
+			"name": "Create/Update Workspaces",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {
+					"accept": true
+				}
+			},
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/hal+json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"businessObjectsInfo\": [\r\n    {\r\n        \"objectId\": \"Basic\",\r\n        \"objectType\": \"OvershoeBO\",\r\n        \"properties\": [\r\n           {\r\n               \"name\": \"CreatedBy\",\r\n               \"value\": [\r\n                  \"Amos Moses\"\r\n                ]\r\n           },\r\n           {\r\n               \"name\": \"ReviewedBy\",\r\n               \"value\": [\r\n                  \"Oscar Madison\"\r\n                ]\r\n           }\r\n        ]\r\n    },\r\n    {\r\n        \"objectId\": \"Deluxe\",\r\n        \"objectType\": \"OvershoeBO\",\r\n        \"properties\": [\r\n           {\r\n               \"name\": \"CreatedBy\",\r\n               \"value\": [\r\n                  \"Morton Q. Person\"\r\n                ]\r\n           },\r\n           {\r\n               \"name\": \"ReviewedBy\",\r\n               \"value\": [\r\n                  \"Alien Zombie\"\r\n                ]\r\n           }\r\n        ]\r\n    }\r\n  ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{bo-service-endpoint}}/api/v1/businessworkspaces",
+					"host": [
+						"{{bo-service-endpoint}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"businessworkspaces"
+					]
+				},
+				"description": "This request creates or updates workspaces for the business objects identified in the request body.\n\nEach workspace will have the properties, propertyGroups, relations, and roles populations specified for its business object."
+			},
+			"response": []
+		},
+		{
+			"name": "Get Workspaces",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {
+					"accept": true
+				}
+			},
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/hal+json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"businessObjects\": [\r\n        {\r\n            \"objectId\": \"Basic\",\r\n            \"objectType\": \"OvershoeBO\"\r\n        },\r\n        {\r\n            \"objectId\": \"Deluxe\",\r\n            \"objectType\": \"OvershoeBO\"\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{bo-service-endpoint}}/api/v1/businessworkspaces/ids",
+					"host": [
+						"{{bo-service-endpoint}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"businessworkspaces",
+						"ids"
+					]
+				},
+				"description": "This request retrieves the workspace ids for the specified business objects."
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "app_confclient_id",
+			"value": ""
+		},
+		{
+			"key": "app_confclient_secret",
+			"value": ""
+		},
+		{
+			"key": "tenant_svcacc_uid",
+			"value": ""
+		},
+		{
+			"key": "tenant_svcacc_pwd",
+			"value": ""
+		},
+		{
+			"key": "tenant_id",
+			"value": ""
+		},
+		{
+			"key": "api_host",
+			"value": "https://na-1.api.opentext.com"
+		},
+		{
+			"key": "token-endpoint",
+			"value": "{{api_host}}/tenants/{{tenant_id}}"
+		},
+		{
+			"key": "bo-service-endpoint",
+			"value": "{{api_host}}/ccbo"
+		},
+		{
+			"key": "access_token",
+			"value": ""
+		}
+	]
+}

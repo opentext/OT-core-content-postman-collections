@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "a48d115e-52cc-4908-8912-088320d38bdf",
+		"_postman_id": "d79dc34c-2a6b-425c-90d1-56d6509b4794",
 		"name": "Workspace API",
 		"description": "Workspace API examples usage\n============================\nThis collection uses collection variables (see tab Variables). There are already some defined but with empty values. These variables depend on your environment and must be entered/adapted before executing the examples. You can create in the Developer Console an App for your tenant. If you extend the Core Content App there are two sets of OAuth clients created, called Public Client Keys and Confidential Client Keys. For this collection you need the later, Confidential Client Keys to set the value for client_id and client_secret\n\n| Variable                      | Description                                        |\n|-------------------------------|----------------------------------------------------|\n| app_confclient_id             | Client Id of your Confidential Client Keys         |\n| app_confclient_secret         | Client Secret of your Confidential Client Keys     |\n| tenant_svcacc_uid             | Tenant service account user (usually mail address) |\n| tenant_svcacc_pwd             | Corresponding password to tenant_svcacc_uid        |\n| tenant-id                     | Id of your tenant                                  |\n\nYou usually don't need to adapt the following variables.\n\n| Variable                      | Description                                        |\n|-------------------------------|----------------------------------------------------|\n| subscription_namespace_prefix | Prefix of the subscription namespace\\*             |               \n| subscription_namespace_name   | Name of the subscription namespace\\*               |\n| api_host                   | Central host to access OT2 APIs\\*\\*                |\n| token-endpoint                | URL of the OAuth2 authentication service\\*\\*       |\n| cms-service-endpoint          | URL of the Content Metadata service\\*\\*            |\n| workspace-service-endpoint    | URL of the Workspace service\\*\\*                   |\n| access_token                  | OAuth Access Token\\*\\*\\*                           |\n\n\\* Leave it, as it is. The right value is automatically detected by request Preparation/Current subscription.\n\n\\*\\* Usually you can leave the default value\n\n\\*\\*\\* Is retrieved via request Preparation/OAuth \n\nThe whole collections is build with the principle that the requests are executed in order. Some can be executed independently (except authentication) others depend on one or more previous requests.\nThese previous requests retrieve information from the response and store it in collection variables. These variables are referenced by subsequent requests i.e. their name enclosed by double curly brackets e.g. {{folder_id}}.\n\nAll requests in the Preparation folder are used to retrieve or create data needed by the subsequent requests, especially the authentication token. These calls do not use Workspace API but CMS resp. OTDS API calls.\n\nThe last folder is the counterpart to it. It contains methods to remove the created data and also to delete the related collection variables. In contraction to Preparation folder there are Workspace API request to delete workspace types and templates. The last call in the folder cleans up the remaining collection variables. So all temporary variables are removed and only the variables in the above table remain.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -148,7 +148,14 @@
 								"exec": [
 									"if(pm.response.code == '200') {\r",
 									"    let jsonData = pm.response.json();\r",
-									"    pm.collectionVariables.set(\"subscription-user-id\", jsonData._embedded.collection[0].id);\r",
+									"    jsonData._embedded.collection.every(function(user) {\r",
+									"        if (user.email) {\r",
+									"            pm.collectionVariables.set(\"subscription-user-id\", user.id);\r",
+									"            return false;\r",
+									"        } else {\r",
+									"            return true;\r",
+									"        }\r",
+									"    });\r",
 									"}"
 								],
 								"type": "text/javascript"
@@ -323,7 +330,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"name\": \"employee\",\r\n    \"type\": \"cms_folder\"\r\n}"
+							"raw": "{\r\n    \"name\": \"employee\",\r\n    \"display_name\": \"Employee\",\r\n    \"type\": \"cms_folder\"\r\n}"
 						},
 						"url": {
 							"raw": "{{cms-service-endpoint}}/instances/folder/ccmapp_enterprise_volume/{{enterprise_volume.id}}/items",
@@ -405,6 +412,13 @@
 											"        pm.collectionVariables.set(id_var, datatype_definition.id);\r",
 											"        console.log(id_var);\r",
 											"    });\r",
+											"    jsonData.roles.forEach(function(role) {\r",
+											"        var match = role.name.match(attributePrefixPattern);\r",
+											"        var fixed_name_part = match[1];\r",
+											"        var id_var = 'role.' + fixed_name_part + \".id\";\r",
+											"        pm.collectionVariables.set(id_var, role.name);\r",
+											"        console.log(id_var);\r",
+											"    });\r",
 											"}"
 										],
 										"type": "text/javascript"
@@ -425,7 +439,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"display_name_multilingual\": {\r\n        \"en\": \"Employee\"\r\n    },\r\n    \"root_folder_type\": {\r\n        \"attributes\": [\r\n            {\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"First name\"\r\n                },\r\n                \"description\": \"First name of employee\",\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": true,\r\n                \"size\": 64,\r\n                \"data_type\": \"string\"\r\n            },\r\n            {\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Last name\"\r\n                },\r\n                \"description\": \"Last name of employee\",\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": true,\r\n                \"size\": 64,\r\n                \"data_type\": \"string\"\r\n            },\r\n            {\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Job title\"\r\n                },\r\n                \"description\": \"Job title of employee\",\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": false,\r\n                \"size\": 64,\r\n                \"data_type\": \"string\",\r\n                \"default_value\": \"Chief of Prophesy Fulfillment\"\r\n            },\r\n            {\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Gender\"\r\n                },\r\n                \"description\": \"Gender of employee\",\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": true,\r\n                \"size\": 10,\r\n                \"data_type\": \"string\",\r\n                \"datatype_definition\": \"gender_pl\"\r\n            }\r\n        ],\r\n        \"datatype_definitions\": [\r\n            {\r\n                \"name\": \"gender_pl\",\r\n                \"data_type\": \"string\",\r\n                \"picklist\": [\r\n                    {\r\n                        \"value\": \"Female\",\r\n                        \"display_name\": \"Female\"\r\n                    },\r\n                    {\r\n                        \"value\": \"Male\",\r\n                        \"display_name\": \"Male\"\r\n                    }\r\n                ]\r\n            }\r\n        ]\r\n    },\r\n    \"roles\": [\r\n        {\r\n            \"name\": \"manager\",\r\n            \"display_name\": \"Manager\",\r\n            \"description\": \"Manager description\"\r\n        },\r\n        {\r\n            \"name\": \"employee\",\r\n            \"display_name\": \"Employee\",\r\n            \"description\": \"Employee description\"\r\n        },\r\n        {\r\n            \"name\": \"hr_business_partner\",\r\n            \"display_name\": \"HR Business Partner\",\r\n            \"description\": \"HR Business Partner description\"\r\n        }\r\n    ],\r\n    \"permission_templates\": [\r\n        {\r\n            \"name\": \"folder_acl\",\r\n            \"description\": \"Folder ACL\",\r\n            \"permits\": [\r\n                {\r\n                    \"identity\": \"employee\",\r\n                    \"permissions\": [\r\n                        \"browse\",\r\n                        \"write\",\r\n                        \"write_content\"\r\n                    ],\r\n                    \"identity_type\": \"case_role\"\r\n                },\r\n                {\r\n                    \"identity\": \"owner\",\r\n                    \"permissions\": [\r\n                        \"browse\",\r\n                        \"write\",\r\n                        \"write_content\",\r\n                        \"read_content\"\r\n                    ],\r\n                    \"identity_type\": \"user_alias\"\r\n                }\r\n            ]\r\n        }\r\n    ],\r\n    \"workspace_type_locations\": []\r\n}",
+									"raw": "{\r\n    \"display_name_multilingual\": {\r\n        \"en\": \"Employee\"\r\n    },\r\n    \"root_folder_type\": {\r\n        \"attributes\": [\r\n            {\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"First name\"\r\n                },\r\n                \"description_multilingual\": {\r\n                    \"en\": \"First name of employee\"\r\n                },\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": true,\r\n                \"size\": 64,\r\n                \"data_type\": \"string\",\r\n                \"localizable\": true\r\n            },\r\n            {\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Last name\"\r\n                },\r\n                \"description_multilingual\": {\r\n                    \"en\": \"Last name of employee\"\r\n                },\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": true,\r\n                \"size\": 64,\r\n                \"data_type\": \"string\",\r\n                \"localizable\": true\r\n            },\r\n            {\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Job title\"\r\n                },\r\n                \"description_multilingual\": {\r\n                    \"en\": \"Job title of employee\"\r\n                },\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": false,\r\n                \"size\": 64,\r\n                \"data_type\": \"string\",\r\n                \"localizable\": true,\r\n                \"default_value_multilingual\" : {\r\n                    \"en\": \"Chief of Prophesy Fulfillment\"\r\n                }\r\n            },\r\n            {\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Gender\"\r\n                },\r\n                \"description_multilingual\": {\r\n                    \"en\": \"Gender of employee\"\r\n                },\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": true,\r\n                \"size\": 10,\r\n                \"data_type\": \"string\",\r\n                \"localizable\": true,\r\n                \"datatype_definition\": \"gender_pl\"\r\n            }\r\n        ],\r\n        \"datatype_definitions\": [\r\n            {\r\n                \"name\": \"gender_pl\",\r\n                \"data_type\": \"string\",\r\n                \"picklist\": [\r\n                    {\r\n                        \"value\": \"Female\",\r\n                        \"display_name_multilingual\": {\r\n                            \"en\": \"Female\"\r\n                        }\r\n                    },\r\n                    {\r\n                        \"value\": \"Male\",\r\n                        \"display_name_multilingual\": {\r\n                            \"en\": \"Male\"\r\n                        }\r\n                    }\r\n                ]\r\n            }\r\n        ]\r\n    },\r\n    \"roles\": [\r\n        {\r\n            \"name\": \"manager\",\r\n            \"display_name_multilingual\": {\r\n                \"en\": \"Manager\"\r\n            },\r\n            \"description\": \"Manager description\"\r\n        },\r\n        {\r\n            \"name\": \"employee\",\r\n            \"display_name_multilingual\": {\r\n                \"en\": \"Employee\"\r\n            },\r\n            \"description\": \"Employee description\"\r\n        },\r\n        {\r\n            \"name\": \"hr_business_partner\",\r\n            \"display_name_multilingual\": {\r\n                \"en\": \"HR Business Partner\"\r\n            },\r\n            \"description\": \"HR Business Partner description\"\r\n        }\r\n    ],\r\n    \"permission_templates\": [\r\n        {\r\n            \"name\": \"folder_acl\",\r\n            \"description\": \"Folder ACL\",\r\n            \"permits\": [\r\n                {\r\n                    \"identity\": \"employee\",\r\n                    \"permissions\": [\r\n                        \"browse\",\r\n                        \"write\",\r\n                        \"write_content\"\r\n                    ],\r\n                    \"identity_type\": \"case_role\"\r\n                },\r\n                {\r\n                    \"identity\": \"owner\",\r\n                    \"permissions\": [\r\n                        \"browse\",\r\n                        \"read_content\",\r\n                        \"write\",\r\n                        \"write_content\",\r\n                        \"lock\",\r\n                        \"version\",\r\n                        \"change_location\",\r\n                        \"create_link\",\r\n                        \"delete\",\r\n                        \"delete_link\",\r\n                        \"change_permission\",\r\n                        \"change_owner\",\r\n                        \"apply_policy\",\r\n                        \"apply_hold\",\r\n                        \"change_folder_links\"\r\n                    ],\r\n                    \"identity_type\": \"user_alias\"\r\n                }\r\n            ]\r\n        }\r\n    ],\r\n    \"workspace_type_locations\": []\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -442,6 +456,73 @@
 										"v1",
 										"workspace",
 										"types"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get workspace type",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if(pm.response.code == '201') {\r",
+											"    let jsonData = pm.response.json();\r",
+											"    var attributePrefixPattern = /(.+)(_.{5})/;\r",
+											"    pm.collectionVariables.set(\"workspace_type_employee\", jsonData.name);\r",
+											"    jsonData.root_folder_type.attributes.forEach(function(attribute) {\r",
+											"        var match = attribute.name.match(attributePrefixPattern);\r",
+											"        var fixed_name_part = match[1];\r",
+											"        var name_var = 'attribute.' + fixed_name_part + \".name\";\r",
+											"        var id_var = 'attribute.' + fixed_name_part + \".id\";\r",
+											"        pm.collectionVariables.set(name_var, attribute.name);\r",
+											"        pm.collectionVariables.set(id_var, attribute.id);\r",
+											"        console.log(id_var);\r",
+											"    });\r",
+											"    jsonData.root_folder_type.datatype_definitions.forEach(function(datatype_definition) {\r",
+											"        var fixed_name_part = datatype_definition.name;\r",
+											"        var id_var = 'datatype_definition.' + fixed_name_part + \".id\";\r",
+											"        pm.collectionVariables.set(id_var, datatype_definition.id);\r",
+											"        console.log(id_var);\r",
+											"    });\r",
+											"    jsonData.roles.forEach(function(role) {\r",
+											"        var match = role.name.match(attributePrefixPattern);\r",
+											"        var fixed_name_part = match[1];\r",
+											"        var id_var = 'role.' + fixed_name_part + \".id\";\r",
+											"        pm.collectionVariables.set(id_var, role.name);\r",
+											"        console.log(id_var);\r",
+											"    });\r",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{workspace-service-endpoint}}/api/v1/workspace/types/{{workspace_type_employee}}",
+									"host": [
+										"{{workspace-service-endpoint}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"workspace",
+										"types",
+										"{{workspace_type_employee}}"
 									]
 								}
 							},
@@ -544,7 +625,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"roles\": [\r\n        {\r\n            \"name\": \"manager\",\r\n            \"display_name\": \"Manager\",\r\n            \"description\": \"Manager description\"\r\n        },\r\n        {\r\n            \"name\": \"employee\",\r\n            \"display_name\": \"Employee\",\r\n            \"description\": \"Employee description\"\r\n        },\r\n        {\r\n            \"name\": \"hr_business_partner\",\r\n            \"display_name\": \"HR Business Partner\",\r\n            \"description\": \"HR Business Partner description\"\r\n        }\r\n    ]\r\n}",
+									"raw": "{\r\n    \"roles\": [\r\n        {\r\n            \"name\": \"{{role.manager.id}}\",\r\n            \"display_name_multilingual\": {\r\n                \"en\": \"Manager (Updated)\"\r\n            },\r\n            \"description\": \"Manager description\"\r\n        },\r\n        {\r\n            \"name\": \"{{role.employee.id}}\",\r\n            \"display_name_multilingual\": {\r\n                \"en\": \"Employee (Updated)\"\r\n            },\r\n            \"description\": \"Employee description\"\r\n        },\r\n        {\r\n            \"name\": \"{{role.hr_business_partner.id}}\",\r\n            \"display_name_multilingual\": {\r\n                \"en\": \"HR Business Partner (Updated)\"\r\n            },\r\n            \"description\": \"HR Business Partner description\"\r\n        }\r\n    ]\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -598,6 +679,13 @@
 											"        pm.collectionVariables.set(id_var, datatype_definition.id);\r",
 											"        console.log(id_var);\r",
 											"    });\r",
+											"    jsonData.roles.forEach(function(role) {\r",
+											"        var match = role.name.match(attributePrefixPattern);\r",
+											"        var fixed_name_part = match[1];\r",
+											"        var id_var = 'role_l10n.' + fixed_name_part + \".id\";\r",
+											"        pm.collectionVariables.set(id_var, role.name);\r",
+											"        console.log(id_var);\r",
+											"    });\r",
 											"}"
 										],
 										"type": "text/javascript"
@@ -609,7 +697,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n  \"display_name_multilingual\": {\r\n    \"en\": \"Employee (L10n)\",\r\n    \"de\": \"Angestellter\"\r\n  },\r\n  \"root_folder_type\": {\r\n    \"attributes\": [\r\n      {\r\n        \"display_name_multilingual\": {\r\n          \"en\": \"First name\",\r\n          \"de\": \"Vorname\"\r\n        },\r\n        \"description\": \"First name of employee\",\r\n        \"searchable\": true,\r\n        \"sortable\": true,\r\n        \"required\": true,\r\n        \"size\": 64,\r\n        \"data_type\": \"string\"\r\n      },\r\n      {\r\n        \"display_name_multilingual\": {\r\n          \"en\": \"Last name\",\r\n          \"de\": \"Nachname\"\r\n        },\r\n        \"description\": \"Last name of employee\",\r\n        \"searchable\": true,\r\n        \"sortable\": true,\r\n        \"required\": true,\r\n        \"size\": 64,\r\n        \"data_type\": \"string\"\r\n      },\r\n      {\r\n        \"display_name_multilingual\": {\r\n          \"en\": \"Job title\",\r\n          \"de\": \"Berufsbezeichnung\"\r\n        },\r\n        \"description\": \"Job title of employee\",\r\n        \"searchable\": true,\r\n        \"sortable\": true,\r\n        \"required\": false,\r\n        \"size\": 64,\r\n        \"data_type\": \"string\",\r\n        \"default_value\": \"Chief of Prophesy Fulfillment\"\r\n      },\r\n      {\r\n        \"display_name_multilingual\": {\r\n          \"en\": \"Gender\",\r\n          \"de\": \"Geschlecht\"\r\n        },\r\n        \"description\": \"Gender of employee\",\r\n        \"searchable\": true,\r\n        \"sortable\": true,\r\n        \"required\": true,\r\n        \"size\": 10,\r\n        \"data_type\": \"string\",\r\n        \"datatype_definition\": \"gender_pl\"\r\n      }\r\n    ],\r\n    \"datatype_definitions\": [\r\n      {\r\n        \"name\": \"gender_pl\",\r\n        \"data_type\": \"string\",\r\n        \"picklist\": [\r\n          {\r\n            \"value\": \"Female\",\r\n            \"display_name\": \"Female\"\r\n          },\r\n          {\r\n            \"value\": \"Male\",\r\n            \"display_name\": \"Male\"\r\n          }\r\n        ]\r\n      }\r\n    ]\r\n  },\r\n  \"roles\": [\r\n    {\r\n      \"name\": \"manager\",\r\n      \"display_name\": \"Manager\",\r\n      \"description\": \"Manager description\"\r\n    },\r\n    {\r\n      \"name\": \"employee\",\r\n      \"display_name\": \"Employee\",\r\n      \"description\": \"Employee description\"\r\n    },\r\n    {\r\n      \"name\": \"hr_business_partner\",\r\n      \"display_name\": \"HR Business Partner\",\r\n      \"description\": \"HR Business Partner description\"\r\n    }\r\n  ],\r\n  \"permission_templates\": [\r\n    {\r\n      \"name\": \"folder_acl\",\r\n      \"description\": \"Folder ACL\",\r\n      \"permits\": [\r\n        {\r\n          \"identity\": \"employee\",\r\n          \"permissions\": [\r\n            \"browse\",\r\n            \"write\",\r\n            \"write_content\"\r\n          ],\r\n          \"identity_type\": \"case_role\"\r\n        },\r\n        {\r\n          \"identity\": \"owner\",\r\n          \"permissions\": [\r\n            \"browse\",\r\n            \"write\",\r\n            \"write_content\",\r\n            \"read_content\"\r\n          ],\r\n          \"identity_type\": \"user_alias\"\r\n        }\r\n      ]\r\n    }\r\n  ],\r\n  \"workspace_type_locations\": []\r\n}",
+									"raw": "{\r\n    \"display_name_multilingual\": {\r\n        \"en\": \"Employee (L10n)\",\r\n        \"de\": \"Angestellter\"\r\n    },\r\n    \"root_folder_type\": {\r\n        \"attributes\": [\r\n            {\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"First name\",\r\n                    \"de\": \"Vorname\"\r\n                },\r\n                \"description_multilingual\": {\r\n                    \"en\": \"First name of employee\",\r\n                    \"de\": \"Vorname des Angestellten\"\r\n                },\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": true,\r\n                \"size\": 64,\r\n                \"data_type\": \"string\",\r\n                \"localizable\": true\r\n            },\r\n            {\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Last name\",\r\n                    \"de\": \"Nachname\"\r\n                },\r\n                \"description_multilingual\": {\r\n                    \"en\": \"Last name of employee\",\r\n                    \"de\": \"Nachname des Angestellten\"\r\n                },\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": true,\r\n                \"size\": 64,\r\n                \"data_type\": \"string\",\r\n                \"localizable\": true\r\n            },\r\n            {\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Job title\",\r\n                    \"de\": \"Berufsbezeichnung\"\r\n                },\r\n                \"description_multilingual\": {\r\n                    \"en\": \"Job title of employee\",\r\n                    \"de\": \"Berufsbezeichnung des Angestellten\"\r\n                },\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": false,\r\n                \"size\": 64,\r\n                \"data_type\": \"string\",\r\n                \"localizable\": true,\r\n                \"default_value_multilingual\": {\r\n                    \"en\": \"Chief of Prophesy Fulfillment\",\r\n                    \"de\": \"Leiter der Prophezeiungs Erfüllung\"\r\n                }\r\n            },\r\n            {\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Gender\",\r\n                    \"de\": \"Geschlecht\"\r\n                },\r\n                \"description_multilingual\": {\r\n                    \"en\": \"Gender of employee\",\r\n                    \"de\": \"Geschlecht des Angestellten\"\r\n                },\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": true,\r\n                \"size\": 10,\r\n                \"data_type\": \"string\",\r\n                \"localizable\": true,\r\n                \"datatype_definition\": \"gender_pl\"\r\n            }\r\n        ],\r\n        \"datatype_definitions\": [\r\n            {\r\n                \"name\": \"gender_pl\",\r\n                \"data_type\": \"string\",\r\n                \"picklist\": [\r\n                    {\r\n                        \"value\": \"Female\",\r\n                        \"display_name_multilingual\": {\r\n                            \"en\": \"Female\",\r\n                            \"de\": \"Weiblich\"\r\n                        }\r\n                    },\r\n                    {\r\n                        \"value\": \"Male\",\r\n                        \"display_name_multilingual\": {\r\n                            \"en\": \"Male\",\r\n                            \"de\": \"Männlich\"\r\n                        }\r\n                    }\r\n                ]\r\n            }\r\n        ]\r\n    },\r\n    \"roles\": [\r\n        {\r\n            \"name\": \"manager\",\r\n            \"display_name_multilingual\": {\r\n                \"en\": \"Manager\",\r\n                \"de\": \"Vorgesetzter\"\r\n            },\r\n            \"description\": \"Manager description\"\r\n        },\r\n        {\r\n            \"name\": \"employee\",\r\n            \"display_name_multilingual\": {\r\n                \"en\": \"Employee\",\r\n                \"de\": \"Angestellter\"\r\n            },\r\n            \"description\": \"Employee description\"\r\n        },\r\n        {\r\n            \"name\": \"hr_business_partner\",\r\n            \"display_name_multilingual\": {\r\n                \"en\": \"HR Business Partner\",\r\n                \"de\": \"HR-Geschäftspartner\"\r\n            },\r\n            \"description\": \"HR Business Partner description\"\r\n        }\r\n    ],\r\n    \"permission_templates\": [\r\n        {\r\n            \"name\": \"folder_acl\",\r\n            \"description\": \"Folder ACL\",\r\n            \"permits\": [\r\n                {\r\n                    \"identity\": \"employee\",\r\n                    \"permissions\": [\r\n                        \"browse\",\r\n                        \"write\",\r\n                        \"write_content\"\r\n                    ],\r\n                    \"identity_type\": \"case_role\"\r\n                },\r\n                {\r\n                    \"identity\": \"owner\",\r\n                    \"permissions\": [\r\n                        \"browse\",\r\n                        \"read_content\",\r\n                        \"write\",\r\n                        \"write_content\",\r\n                        \"lock\",\r\n                        \"version\",\r\n                        \"change_location\",\r\n                        \"create_link\",\r\n                        \"delete\",\r\n                        \"delete_link\",\r\n                        \"change_permission\",\r\n                        \"change_owner\",\r\n                        \"apply_policy\",\r\n                        \"apply_hold\",\r\n                        \"change_folder_links\"\r\n                    ],\r\n                    \"identity_type\": \"user_alias\"\r\n                }\r\n            ]\r\n        }\r\n    ],\r\n    \"workspace_type_locations\": []\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -632,13 +720,101 @@
 							"response": []
 						},
 						{
+							"name": "Get workspace type (localized)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if(pm.response.code == '201') {\r",
+											"    let jsonData = pm.response.json();\r",
+											"    var attributePrefixPattern = /(.+)(_.{5})/;\r",
+											"    pm.collectionVariables.set(\"workspace_type_employee_l10n\", jsonData.name);\r",
+											"    jsonData.root_folder_type.attributes.forEach(function(attribute) {\r",
+											"        var match = attribute.name.match(attributePrefixPattern);\r",
+											"        var fixed_name_part = match[1];\r",
+											"        var name_var = 'attribute_l10n.' + fixed_name_part + \".name\";\r",
+											"        var id_var = 'attribute_l10n.' + fixed_name_part + \".id\";\r",
+											"        pm.collectionVariables.set(name_var, attribute.name);\r",
+											"        pm.collectionVariables.set(id_var, attribute.id);\r",
+											"        console.log(id_var);\r",
+											"    });\r",
+											"    jsonData.root_folder_type.datatype_definitions.forEach(function(datatype_definition) {\r",
+											"        var fixed_name_part = datatype_definition.name;\r",
+											"        var id_var = 'datatype_definition_l10n.' + fixed_name_part + \".id\";\r",
+											"        pm.collectionVariables.set(id_var, datatype_definition.id);\r",
+											"        console.log(id_var);\r",
+											"    });\r",
+											"    jsonData.roles.forEach(function(role) {\r",
+											"        var match = role.name.match(attributePrefixPattern);\r",
+											"        var fixed_name_part = match[1];\r",
+											"        var id_var = 'role_l10n.' + fixed_name_part + \".id\";\r",
+											"        pm.collectionVariables.set(id_var, role.name);\r",
+											"        console.log(id_var);\r",
+											"    });\r",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{workspace-service-endpoint}}/api/v1/workspace/types/{{workspace_type_employee_l10n}}",
+									"host": [
+										"{{workspace-service-endpoint}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"workspace",
+										"types",
+										"{{workspace_type_employee_l10n}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
 							"name": "Update attribute localization",
 							"request": {
-								"method": "PUT",
+								"method": "PATCH",
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"display_name_multilingual\": {\r\n        \"en\": \"Employee (L10n)\",\r\n        \"de\": \"Mitarbeiter\",\r\n        \"fr\": \"Employée\"\r\n    },\r\n    \"description\": \"Workspace used for internal employees\",\r\n    \"root_folder_type\": {\r\n        \"attributes\": [\r\n            {\r\n                \"id\": \"{{attribute_l10n.first_name.id}}\",\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"First name\",\r\n                    \"de\": \"Vorname\",\r\n                    \"fr\": \"Prénom\"\r\n                },\r\n                \"description\": \"First name of employee\",\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": true,\r\n                \"size\": 64,\r\n                \"data_type\": \"string\"\r\n            },\r\n            {\r\n                \"id\": \"{{attribute_l10n.last_name.id}}\",\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Last name\",\r\n                    \"de\": \"Nachname\",\r\n                    \"fr\": \"Nom de famille\"\r\n                },\r\n                \"description\": \"Last name of employee\",\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": true,\r\n                \"size\": 64,\r\n                \"data_type\": \"string\"\r\n            },\r\n            {\r\n                \"id\": \"{{attribute_l10n.job_title.id}}\",\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Job title\",\r\n                    \"de\": \"Berufsbezeichnung\",\r\n                    \"fr\": \"Nom de profession\"\r\n                },\r\n                \"description\": \"Job title of employee\",\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": false,\r\n                \"size\": 64,\r\n                \"data_type\": \"string\",\r\n                \"default_value\": \"Chief of Prophesy Fulfillment\"\r\n            },\r\n            {\r\n                \"id\": \"{{attribute_l10n.gender.id}}\",\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Gender\",\r\n                    \"de\": \"Geschlecht\",\r\n                    \"fr\": \"Gent\"\r\n                },\r\n                \"description\": \"Gender of employee\",\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": true,\r\n                \"size\": 10,\r\n                \"data_type\": \"string\"\r\n            }\r\n        ],\r\n        \"datatype_definitions\": [\r\n            {\r\n                \"id\": \"{{datatype_definition_l10n.gender_pl.id}}\",\r\n                \"name\": \"gender_pl\",\r\n                \"data_type\": \"string\",\r\n                \"picklist\": [\r\n                    {\r\n                        \"value\": \"Female\",\r\n                        \"display_name\": \"Female\"\r\n                    },\r\n                    {\r\n                        \"value\": \"Male\",\r\n                        \"display_name\": \"Male\"\r\n                    }\r\n                ]\r\n            }\r\n        ]\r\n    },\r\n    \"roles\": [\r\n        {\r\n            \"name\": \"manager\",\r\n            \"display_name\": \"Manager\",\r\n            \"description\": \"Manager description\"\r\n        },\r\n        {\r\n            \"name\": \"employee\",\r\n            \"display_name\": \"Employee\",\r\n            \"description\": \"Employee description\"\r\n        },\r\n        {\r\n            \"name\": \"hr_business_partner\",\r\n            \"display_name\": \"HR Business Partner\",\r\n            \"description\": \"HR Business Partner description\"\r\n        }\r\n    ],\r\n    \"permission_templates\": [\r\n        {\r\n            \"name\": \"folder_acl\",\r\n            \"description\": \"Folder ACL\",\r\n            \"permits\": [\r\n                {\r\n                    \"identity\": \"employee\",\r\n                    \"permissions\": [\r\n                        \"browse\",\r\n                        \"write\",\r\n                        \"write_content\"\r\n                    ],\r\n                    \"identity_type\": \"case_role\"\r\n                },\r\n                {\r\n                    \"identity\": \"owner\",\r\n                    \"permissions\": [\r\n                        \"browse\",\r\n                        \"write\",\r\n                        \"write_content\",\r\n                        \"read_content\"\r\n                    ],\r\n                    \"identity_type\": \"user_alias\"\r\n                }\r\n            ]\r\n        }\r\n    ],\r\n    \"workspace_type_locations\": []\r\n}",
+									"raw": "{\r\n    \"display_name_multilingual\": {\r\n        \"en\": \"Employee (L10n)\",\r\n        \"de\": \"Mitarbeiter\",\r\n        \"fr\": \"Employée\"\r\n    },\r\n    \"description\": \"Workspace used for internal employees\",\r\n    \"root_folder_type\": {\r\n        \"attributes\": [\r\n            {\r\n                \"id\": \"{{attribute_l10n.first_name.id}}\",\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"First name\",\r\n                    \"de\": \"Vorname\",\r\n                    \"fr\": \"Prénom\"\r\n                },\r\n                \"description_multilingual\": {\r\n                    \"en\": \"First name of employee\",\r\n                    \"de\": \"Vorname des Angestellten\",\r\n                    \"fr\": \"Prénom de l'employé\"\r\n                },\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": true,\r\n                \"size\": 64,\r\n                \"data_type\": \"string\"\r\n            },\r\n            {\r\n                \"id\": \"{{attribute_l10n.last_name.id}}\",\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Last name\",\r\n                    \"de\": \"Nachname\",\r\n                    \"fr\": \"Nom de famille\"\r\n                },\r\n                \"description_multilingual\": {\r\n                    \"en\": \"Last name of employee\",\r\n                    \"de\": \"Nachname des Angestellten\",\r\n                    \"fr\": \"Nom de famille de l'employé\"\r\n                },\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": true,\r\n                \"size\": 64,\r\n                \"data_type\": \"string\"\r\n            },\r\n            {\r\n                \"id\": \"{{attribute_l10n.job_title.id}}\",\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Job title\",\r\n                    \"de\": \"Berufsbezeichnung\",\r\n                    \"fr\": \"Nom de profession\"\r\n                },\r\n                \"description_multilingual\": {\r\n                    \"en\": \"Job title of employee\",\r\n                    \"de\": \"Berufsbezeichnung des Angestellten\",\r\n                    \"fr\": \"Titre du poste de l'employé\"\r\n                },\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": false,\r\n                \"size\": 64,\r\n                \"data_type\": \"string\",\r\n                \"default_value_multilingual\": {\r\n                    \"en\": \"Chief of Prophesy Fulfillment\",\r\n                    \"de\": \"Leiter der Prophezeiungs Erfüllung\",\r\n                    \"fr\": \"Chef de l'accomplissement des prophéties\"\r\n                }\r\n            },\r\n            {\r\n                \"id\": \"{{attribute_l10n.gender.id}}\",\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Gender\",\r\n                    \"de\": \"Geschlecht\",\r\n                    \"fr\": \"Gent\"\r\n                },\r\n                \"description_multilingual\": {\r\n                    \"en\": \"Gender of employee\",\r\n                    \"de\": \"Geschlecht des Angestellten\",\r\n                    \"fr\": \"Sexe de l'employé\"\r\n                },\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": true,\r\n                \"size\": 10,\r\n                \"data_type\": \"string\"\r\n            }\r\n        ],\r\n        \"datatype_definitions\": [\r\n            {\r\n                \"id\": \"{{datatype_definition_l10n.gender_pl.id}}\",\r\n                \"name\": \"gender_pl\",\r\n                \"data_type\": \"string\",\r\n                \"picklist\": [\r\n                    {\r\n                        \"value\": \"Female\",\r\n                        \"display_name_multilingual\": {\r\n                            \"en\": \"Female\",\r\n                            \"de\": \"Weiblich\",\r\n                            \"fr\": \"Femme\"\r\n                        }\r\n                    },\r\n                    {\r\n                        \"value\": \"Male\",\r\n                        \"display_name_multilingual\": {\r\n                            \"en\": \"Male\",\r\n                            \"de\": \"Männlich\",\r\n                            \"fr\": \"Homme\"\r\n                        }\r\n                    }\r\n                ]\r\n            }\r\n        ]\r\n    }\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{workspace-service-endpoint}}/api/v1/workspace/types/{{workspace_type_employee_l10n}}",
+									"host": [
+										"{{workspace-service-endpoint}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"workspace",
+										"types",
+										"{{workspace_type_employee_l10n}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update role localization",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"roles\": [\r\n        {\r\n            \"name\": \"{{role_l10n.manager.id}}\",\r\n            \"display_name_multilingual\": {\r\n                \"en\": \"Manager\",\r\n                \"de\": \"Vorgesetzter\",\r\n                \"fr\": \"Gestionnaire\"\r\n            },\r\n            \"description\": \"Manager description\"\r\n        },\r\n        {\r\n            \"name\": \"{{role_l10n.employee.id}}\",\r\n            \"display_name_multilingual\": {\r\n                \"en\": \"Employee\",\r\n                \"de\": \"Mitarbeiter\",\r\n                \"fr\": \"Employée\"\r\n            },\r\n            \"description\": \"Employee description\"\r\n        },\r\n        {\r\n            \"name\": \"{{role_l10n.hr_business_partner.id}}\",\r\n            \"display_name_multilingual\": {\r\n                \"en\": \"HR Business Partner\",\r\n                \"de\": \"HR-Geschäftspartner\",\r\n                \"fr\": \"Partenaire d'affaires RH\"\r\n            },\r\n            \"description\": \"HR Business Partner description\"\r\n        }\r\n    ]\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -702,7 +878,7 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{workspace-service-endpoint}}/api/v1/workspace/types?expandAll=true&page=0&size=1000",
+									"raw": "{{workspace-service-endpoint}}/api/v1/workspace/types?expandAll=true&page=0&size=50",
 									"host": [
 										"{{workspace-service-endpoint}}"
 									],
@@ -723,7 +899,7 @@
 										},
 										{
 											"key": "size",
-											"value": "1000"
+											"value": "50"
 										}
 									]
 								}
@@ -782,6 +958,13 @@
 											"        pm.collectionVariables.set(id_var, datatype_definition.id);\r",
 											"        console.log(id_var);\r",
 											"    });\r",
+											"    jsonData.roles.forEach(function(role) {\r",
+											"        var match = role.name.match(attributePrefixPattern);\r",
+											"        var fixed_name_part = match[1];\r",
+											"        var id_var = 'role_attr.' + fixed_name_part + \".id\";\r",
+											"        pm.collectionVariables.set(id_var, role.name);\r",
+											"        console.log(id_var);\r",
+											"    });\r",
 											"}"
 										],
 										"type": "text/javascript"
@@ -802,7 +985,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"display_name_multilingual\": {\r\n        \"en\": \"EmployeeAttr\"\r\n    },\r\n    \"root_folder_type\": {\r\n        \"attributes\": [\r\n            {\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"First name\"\r\n                },\r\n                \"description\": \"First name of employee\",\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": true,\r\n                \"size\": 64,\r\n                \"data_type\": \"string\"\r\n            },\r\n            {\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Last name\"\r\n                },\r\n                \"description\": \"Last name of employee\",\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": true,\r\n                \"size\": 64,\r\n                \"data_type\": \"string\"\r\n            },\r\n            {\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Job title\"\r\n                },\r\n                \"description\": \"Job title of employee\",\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": false,\r\n                \"size\": 64,\r\n                \"data_type\": \"string\",\r\n                \"default_value\": \"Chief of Prophesy Fulfillment\"\r\n            },\r\n            {\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Gender\"\r\n                },\r\n                \"description\": \"Gender of employee\",\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": true,\r\n                \"size\": 10,\r\n                \"data_type\": \"string\",\r\n                \"datatype_definition\": \"gender_pl\"\r\n            }\r\n        ],\r\n        \"datatype_definitions\": [\r\n            {\r\n                \"name\": \"gender_pl\",\r\n                \"data_type\": \"string\",\r\n                \"picklist\": [\r\n                    {\r\n                        \"value\": \"Female\",\r\n                        \"display_name\": \"Female\"\r\n                    },\r\n                    {\r\n                        \"value\": \"Male\",\r\n                        \"display_name\": \"Male\"\r\n                    }\r\n                ]\r\n            }\r\n        ]\r\n    },\r\n    \"roles\": [\r\n        {\r\n            \"name\": \"manager\",\r\n            \"display_name\": \"Manager\",\r\n            \"description\": \"Manager description\"\r\n        },\r\n        {\r\n            \"name\": \"employee\",\r\n            \"display_name\": \"Employee\",\r\n            \"description\": \"Employee description\"\r\n        },\r\n        {\r\n            \"name\": \"hr_business_partner\",\r\n            \"display_name\": \"HR Business Partner\",\r\n            \"description\": \"HR Business Partner description\"\r\n        }\r\n    ],\r\n    \"permission_templates\": [\r\n        {\r\n            \"name\": \"folder_acl\",\r\n            \"description\": \"Folder ACL\",\r\n            \"permits\": [\r\n                {\r\n                    \"identity\": \"employee\",\r\n                    \"permissions\": [\r\n                        \"browse\",\r\n                        \"write\",\r\n                        \"write_content\"\r\n                    ],\r\n                    \"identity_type\": \"case_role\"\r\n                },\r\n                {\r\n                    \"identity\": \"owner\",\r\n                    \"permissions\": [\r\n                        \"browse\",\r\n                        \"write\",\r\n                        \"write_content\",\r\n                        \"read_content\"\r\n                    ],\r\n                    \"identity_type\": \"user_alias\"\r\n                }\r\n            ]\r\n        }\r\n    ],\r\n    \"workspace_type_locations\": []\r\n}",
+									"raw": "{\r\n    \"display_name_multilingual\": {\r\n        \"en\": \"EmployeeAttr\"\r\n    },\r\n    \"root_folder_type\": {\r\n        \"attributes\": [\r\n            {\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"First name\"\r\n                },\r\n                \"description_multilingual\": {\r\n                    \"en\": \"First name of employee\"\r\n                },\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": true,\r\n                \"size\": 64,\r\n                \"data_type\": \"string\",\r\n                \"localizable\": true\r\n            },\r\n            {\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Last name\"\r\n                },\r\n                \"description_multilingual\": {\r\n                    \"en\": \"Last name of employee\"\r\n                },\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": true,\r\n                \"size\": 64,\r\n                \"data_type\": \"string\",\r\n                \"localizable\": true\r\n            },\r\n            {\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Job title\"\r\n                },\r\n                \"description_multilingual\": {\r\n                    \"en\": \"Job title of employee\"\r\n                },\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": false,\r\n                \"size\": 64,\r\n                \"data_type\": \"string\",\r\n                \"localizable\": true,\r\n                \"default_value_multilingual\": {\r\n                    \"en\": \"Chief of Prophesy Fulfillment\"\r\n                }\r\n            },\r\n            {\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Gender\"\r\n                },\r\n                \"description_multilingual\": {\r\n                    \"en\": \"Gender of employee\"\r\n                },\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": true,\r\n                \"size\": 10,\r\n                \"data_type\": \"string\",\r\n                \"localizable\": true,\r\n                \"datatype_definition\": \"gender_pl\"\r\n            }\r\n        ],\r\n        \"datatype_definitions\": [\r\n            {\r\n                \"name\": \"gender_pl\",\r\n                \"data_type\": \"string\",\r\n                \"picklist\": [\r\n                    {\r\n                        \"value\": \"Female\",\r\n                        \"display_name_multilingual\": {\r\n                            \"en\": \"Female\"\r\n                        }\r\n                    },\r\n                    {\r\n                        \"value\": \"Male\",\r\n                        \"display_name_multilingual\": {\r\n                            \"en\": \"Male\"\r\n                        }\r\n                    }\r\n                ]\r\n            }\r\n        ]\r\n    },\r\n    \"roles\": [\r\n        {\r\n            \"name\": \"manager\",\r\n            \"display_name_multilingual\": {\r\n                \"en\": \"Manager\"\r\n            },\r\n            \"description\": \"Manager description\"\r\n        },\r\n        {\r\n            \"name\": \"employee\",\r\n            \"display_name_multilingual\": {\r\n                \"en\": \"Employee\"\r\n            },\r\n            \"description\": \"Employee description\"\r\n        },\r\n        {\r\n            \"name\": \"hr_business_partner\",\r\n            \"display_name_multilingual\": {\r\n                \"en\": \"HR Business Partner\"\r\n            },\r\n            \"description\": \"HR Business Partner description\"\r\n        }\r\n    ],\r\n    \"permission_templates\": [\r\n        {\r\n            \"name\": \"folder_acl\",\r\n            \"description\": \"Folder ACL\",\r\n            \"permits\": [\r\n                {\r\n                    \"identity\": \"employee\",\r\n                    \"permissions\": [\r\n                        \"browse\",\r\n                        \"write\",\r\n                        \"write_content\"\r\n                    ],\r\n                    \"identity_type\": \"case_role\"\r\n                },\r\n                {\r\n                    \"identity\": \"owner\",\r\n                    \"permissions\": [\r\n                        \"browse\",\r\n                        \"write\",\r\n                        \"write_content\",\r\n                        \"read_content\"\r\n                    ],\r\n                    \"identity_type\": \"user_alias\"\r\n                }\r\n            ]\r\n        }\r\n    ],\r\n    \"workspace_type_locations\": []\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -825,13 +1008,80 @@
 							"response": []
 						},
 						{
-							"name": "Update attributes",
+							"name": "Get workspace type EmployeeAttr",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if(pm.response.code == '201') {\r",
+											"    let jsonData = pm.response.json();\r",
+											"    var attributePrefixPattern = /(.+)(_.{5})/;\r",
+											"    pm.collectionVariables.set(\"workspace_type_employee_attr\", jsonData.name);\r",
+											"    jsonData.root_folder_type.attributes.forEach(function(attribute) {\r",
+											"        var match = attribute.name.match(attributePrefixPattern);\r",
+											"        var fixed_name_part = match[1];\r",
+											"        var name_var = 'attribute_attr.' + fixed_name_part + \".name\";\r",
+											"        var id_var = 'attribute_attr.' + fixed_name_part + \".id\";\r",
+											"        pm.collectionVariables.set(name_var, attribute.name);\r",
+											"        pm.collectionVariables.set(id_var, attribute.id);\r",
+											"        console.log(id_var);\r",
+											"    });\r",
+											"    jsonData.root_folder_type.datatype_definitions.forEach(function(datatype_definition) {\r",
+											"        var fixed_name_part = datatype_definition.name;\r",
+											"        var id_var = 'datatype_definition_attr.' + fixed_name_part + \".id\";\r",
+											"        pm.collectionVariables.set(id_var, datatype_definition.id);\r",
+											"        console.log(id_var);\r",
+											"    });\r",
+											"    jsonData.roles.forEach(function(role) {\r",
+											"        var match = role.name.match(attributePrefixPattern);\r",
+											"        var fixed_name_part = match[1];\r",
+											"        var id_var = 'role_attr.' + fixed_name_part + \".id\";\r",
+											"        pm.collectionVariables.set(id_var, role.name);\r",
+											"        console.log(id_var);\r",
+											"    });\r",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
 							"request": {
-								"method": "PUT",
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{workspace-service-endpoint}}/api/v1/workspace/types/{{workspace_type_employee_attr}}",
+									"host": [
+										"{{workspace-service-endpoint}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"workspace",
+										"types",
+										"{{workspace_type_employee_attr}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Add / Update / Remove attributes",
+							"request": {
+								"method": "PATCH",
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"display_name_multilingual\": {\r\n        \"en\": \"EmployeeAttr\"\r\n    },\r\n    \"description\": \"Workspace used for internal employees\",\r\n    \"root_folder_type\": {\r\n        \"attributes\": [\r\n            {\r\n                \"id\": \"{{attribute_attr.first_name.id}}\",\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"First name (modified)\"\r\n                },\r\n                \"description\": \"First name of employee (also middle names)\",\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": false,\r\n                \"size\": 128,\r\n                \"data_type\": \"string\"\r\n            },\r\n            {\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Department\"\r\n                },\r\n                \"description\": \"Department of employee\",\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": false,\r\n                \"size\": 128,\r\n                \"data_type\": \"string\"\r\n            },\r\n            {\r\n                \"id\": \"{{attribute_attr.last_name.id}}\",\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Last name (modified)\"\r\n                },\r\n                \"description\": \"Last name of employee (modified)\",\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": false,\r\n                \"size\": 128,\r\n                \"data_type\": \"string\"\r\n            }\r\n        ],\r\n        \"datatype_definitions\": []\r\n    },\r\n    \"roles\": [\r\n        {\r\n            \"name\": \"manager\",\r\n            \"display_name\": \"Manager\",\r\n            \"description\": \"Manager description\"\r\n        },\r\n        {\r\n            \"name\": \"employee\",\r\n            \"display_name\": \"Employee\",\r\n            \"description\": \"Employee description\"\r\n        },\r\n        {\r\n            \"name\": \"hr_business_partner\",\r\n            \"display_name\": \"HR Business Partner\",\r\n            \"description\": \"HR Business Partner description\"\r\n        }\r\n    ],\r\n    \"permission_templates\": [\r\n        {\r\n            \"name\": \"folder_acl\",\r\n            \"description\": \"Folder ACL\",\r\n            \"permits\": [\r\n                {\r\n                    \"identity\": \"employee\",\r\n                    \"permissions\": [\r\n                        \"browse\",\r\n                        \"write\",\r\n                        \"write_content\"\r\n                    ],\r\n                    \"identity_type\": \"case_role\"\r\n                },\r\n                {\r\n                    \"identity\": \"owner\",\r\n                    \"permissions\": [\r\n                        \"browse\",\r\n                        \"write\",\r\n                        \"write_content\",\r\n                        \"read_content\"\r\n                    ],\r\n                    \"identity_type\": \"user_alias\"\r\n                }\r\n            ]\r\n        }\r\n    ],\r\n    \"workspace_type_locations\": []\r\n}",
+									"raw": "{\r\n    \"root_folder_type\": {\r\n        \"attributes\": [\r\n            {\r\n                \"id\": \"{{attribute_attr.first_name.id}}\",\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"First name (modified)\"\r\n                },\r\n                \"description_multilingual\": {\r\n                    \"en\": \"First name of employee (also middle names)\"\r\n                },\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": false,\r\n                \"size\": 128,\r\n                \"data_type\": \"string\"\r\n            },\r\n            {\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Department\"\r\n                },\r\n                \"description_multilingual\": {\r\n                    \"en\": \"Department of employee\"\r\n                },\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": false,\r\n                \"size\": 128,\r\n                \"data_type\": \"string\"\r\n            },\r\n            {\r\n                \"id\": \"{{attribute_attr.last_name.id}}\",\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Last name (modified)\"\r\n                },\r\n                \"description_multilingual\": {\r\n                    \"en\": \"Last name of employee (modified)\"\r\n                },\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": false,\r\n                \"size\": 128,\r\n                \"data_type\": \"string\"\r\n            }\r\n        ],\r\n        \"datatype_definitions\": []\r\n    }\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -861,7 +1111,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"permission_templates\": [\r\n        {\r\n            \"name\": \"folder_acl\",\r\n            \"description\": \"Folder ACL\",\r\n            \"permits\": [\r\n                {\r\n                    \"identity\": \"employee\",\r\n                    \"permissions\": [\r\n                        \"browse\",\r\n                        \"write\",\r\n                        \"write_content\"\r\n                    ],\r\n                    \"identity_type\": \"case_role\"\r\n                }\r\n            ]\r\n        }\r\n    ]\r\n}",
+									"raw": "{\r\n    \"permission_templates\": [\r\n        {\r\n            \"name\": \"folder_acl\",\r\n            \"description\": \"Folder ACL\",\r\n            \"permits\": [\r\n                {\r\n                    \"identity\": \"{{role_attr.employee.id}}\",\r\n                    \"permissions\": [\r\n                        \"browse\",\r\n                        \"read_content\",\r\n                        \"lock\",\r\n                        \"version\",\r\n                        \"write\",\r\n                        \"write_content\",\r\n                        \"change_location\",\r\n                        \"change_folder_links\",\r\n                        \"create_link\"\r\n                    ],\r\n                    \"identity_type\": \"case_role\"\r\n                },\r\n                {\r\n                    \"identity\": \"owner\",\r\n                    \"permissions\": [\r\n                        \"browse\",\r\n                        \"read_content\",\r\n                        \"write\",\r\n                        \"write_content\",\r\n                        \"lock\",\r\n                        \"version\",\r\n                        \"change_location\",\r\n                        \"create_link\",\r\n                        \"delete\",\r\n                        \"delete_link\",\r\n                        \"change_permission\",\r\n                        \"change_owner\",\r\n                        \"apply_policy\",\r\n                        \"apply_hold\",\r\n                        \"change_folder_links\"\r\n                    ],\r\n                    \"identity_type\": \"user_alias\"\r\n                },\r\n                {\r\n                    \"identity\": \"subscription_users\",\r\n                    \"permissions\": [\r\n                        \"browse\",\r\n                        \"read_content\"\r\n                    ],\r\n                    \"identity_type\": \"role_alias\"\r\n                }\r\n            ]\r\n        }\r\n    ]\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -958,6 +1208,13 @@
 											"        pm.collectionVariables.set(id_var, datatype_definition.id);\r",
 											"        console.log(id_var);\r",
 											"    });\r",
+											"    jsonData.roles.forEach(function(role) {\r",
+											"        var match = role.name.match(attributePrefixPattern);\r",
+											"        var fixed_name_part = match[1];\r",
+											"        var id_var = 'role_pick.' + fixed_name_part + \".id\";\r",
+											"        pm.collectionVariables.set(id_var, role.name);\r",
+											"        console.log(id_var);\r",
+											"    });\r",
 											"}"
 										],
 										"type": "text/javascript"
@@ -978,7 +1235,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"display_name_multilingual\": {\r\n        \"en\": \"EmployeePick\"\r\n    },\r\n    \"root_folder_type\": {\r\n        \"attributes\": [\r\n            {\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"First name\"\r\n                },\r\n                \"description\": \"First name of employee\",\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": true,\r\n                \"size\": 64,\r\n                \"data_type\": \"string\"\r\n            },\r\n            {\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Last name\"\r\n                },\r\n                \"description\": \"Last name of employee\",\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": true,\r\n                \"size\": 64,\r\n                \"data_type\": \"string\"\r\n            },\r\n            {\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Job title\"\r\n                },\r\n                \"description\": \"Job title of employee\",\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": false,\r\n                \"size\": 64,\r\n                \"data_type\": \"string\",\r\n                \"default_value\": \"Chief of Prophesy Fulfillment\"\r\n            },\r\n            {\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Gender\"\r\n                },\r\n                \"description\": \"Gender of employee\",\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": true,\r\n                \"size\": 10,\r\n                \"data_type\": \"string\",\r\n                \"datatype_definition\": \"gender_pl\"\r\n            }\r\n        ],\r\n        \"datatype_definitions\": [\r\n            {\r\n                \"name\": \"gender_pl\",\r\n                \"data_type\": \"string\",\r\n                \"picklist\": [\r\n                    {\r\n                        \"value\": \"Female\",\r\n                        \"display_name\": \"Female\"\r\n                    },\r\n                    {\r\n                        \"value\": \"Male\",\r\n                        \"display_name\": \"Male\"\r\n                    }\r\n                ]\r\n            }\r\n        ]\r\n    },\r\n    \"roles\": [\r\n        {\r\n            \"name\": \"manager\",\r\n            \"display_name\": \"Manager\",\r\n            \"description\": \"Manager description\"\r\n        },\r\n        {\r\n            \"name\": \"employee\",\r\n            \"display_name\": \"Employee\",\r\n            \"description\": \"Employee description\"\r\n        },\r\n        {\r\n            \"name\": \"hr_business_partner\",\r\n            \"display_name\": \"HR Business Partner\",\r\n            \"description\": \"HR Business Partner description\"\r\n        }\r\n    ],\r\n    \"permission_templates\": [\r\n        {\r\n            \"name\": \"folder_acl\",\r\n            \"description\": \"Folder ACL\",\r\n            \"permits\": [\r\n                {\r\n                    \"identity\": \"employee\",\r\n                    \"permissions\": [\r\n                        \"browse\",\r\n                        \"write\",\r\n                        \"write_content\"\r\n                    ],\r\n                    \"identity_type\": \"case_role\"\r\n                },\r\n                {\r\n                    \"identity\": \"owner\",\r\n                    \"permissions\": [\r\n                        \"browse\",\r\n                        \"write\",\r\n                        \"write_content\",\r\n                        \"read_content\"\r\n                    ],\r\n                    \"identity_type\": \"user_alias\"\r\n                }\r\n            ]\r\n        }\r\n    ],\r\n    \"workspace_type_locations\": []\r\n}",
+									"raw": "{\r\n    \"display_name_multilingual\": {\r\n        \"en\": \"EmployeePick\"\r\n    },\r\n    \"root_folder_type\": {\r\n        \"attributes\": [\r\n            {\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Gender\",\r\n                    \"de\": \"Geschlecht\"\r\n                },\r\n                \"description_multilingual\": {\r\n                    \"en\": \"Gender of employee\",\r\n                    \"de\": \"Geschlecht des Angestellten\"\r\n                },\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": true,\r\n                \"size\": 10,\r\n                \"data_type\": \"string\",\r\n                \"localizable\": true,\r\n                \"datatype_definition\": \"gender_pl\"\r\n            }\r\n        ],\r\n        \"datatype_definitions\": [\r\n            {\r\n                \"name\": \"gender_pl\",\r\n                \"data_type\": \"string\",\r\n                \"picklist\": [\r\n                    {\r\n                        \"value\": \"Female\",\r\n                        \"display_name_multilingual\": {\r\n                            \"en\": \"Female\",\r\n                            \"de\": \"Weiblich\"\r\n                        }\r\n                    },\r\n                    {\r\n                        \"value\": \"Male\",\r\n                        \"display_name_multilingual\": {\r\n                            \"en\": \"Male\",\r\n                            \"de\": \"Männlich\"\r\n                        }\r\n                    }\r\n                ]\r\n            }\r\n        ]\r\n    },\r\n    \"roles\": [\r\n        {\r\n            \"name\": \"manager\",\r\n            \"display_name_multilingual\": {\r\n                \"en\": \"Manager\",\r\n                \"de\": \"Vorgesetzter\"\r\n            },\r\n            \"description\": \"Manager description\"\r\n        },\r\n        {\r\n            \"name\": \"employee\",\r\n            \"display_name_multilingual\": {\r\n                \"en\": \"Employee\",\r\n                \"de\": \"Angestellter\"\r\n            },\r\n            \"description\": \"Employee description\"\r\n        },\r\n        {\r\n            \"name\": \"hr_business_partner\",\r\n            \"display_name_multilingual\": {\r\n                \"en\": \"HR Business Partner\",\r\n                \"de\": \"HR-Geschäftspartner\"\r\n            },\r\n            \"description\": \"HR Business Partner description\"\r\n        }\r\n    ],\r\n    \"permission_templates\": [\r\n        {\r\n            \"name\": \"folder_acl\",\r\n            \"description\": \"Folder ACL\",\r\n            \"permits\": [\r\n                {\r\n                    \"identity\": \"employee\",\r\n                    \"permissions\": [\r\n                        \"browse\",\r\n                        \"write\",\r\n                        \"write_content\"\r\n                    ],\r\n                    \"identity_type\": \"case_role\"\r\n                },\r\n                {\r\n                    \"identity\": \"owner\",\r\n                    \"permissions\": [\r\n                        \"browse\",\r\n                        \"read_content\",\r\n                        \"write\",\r\n                        \"write_content\",\r\n                        \"lock\",\r\n                        \"version\",\r\n                        \"change_location\",\r\n                        \"create_link\",\r\n                        \"delete\",\r\n                        \"delete_link\",\r\n                        \"change_permission\",\r\n                        \"change_owner\",\r\n                        \"apply_policy\",\r\n                        \"apply_hold\",\r\n                        \"change_folder_links\"\r\n                    ],\r\n                    \"identity_type\": \"user_alias\"\r\n                }\r\n            ]\r\n        }\r\n    ],\r\n    \"workspace_type_locations\": []\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -1001,13 +1258,80 @@
 							"response": []
 						},
 						{
+							"name": "Get workspace type EmployeePick",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if(pm.response.code == '201') {\r",
+											"    let jsonData = pm.response.json();\r",
+											"    var attributePrefixPattern = /(.+)(_.{5})/;\r",
+											"    pm.collectionVariables.set(\"workspace_type_employee_pick\", jsonData.name);\r",
+											"    jsonData.root_folder_type.attributes.forEach(function(attribute) {\r",
+											"        var match = attribute.name.match(attributePrefixPattern);\r",
+											"        var fixed_name_part = match[1];\r",
+											"        var name_var = 'attribute_pick.' + fixed_name_part + \".name\";\r",
+											"        var id_var = 'attribute_pick.' + fixed_name_part + \".id\";\r",
+											"        pm.collectionVariables.set(name_var, attribute.name);\r",
+											"        pm.collectionVariables.set(id_var, attribute.id);\r",
+											"        console.log(id_var);\r",
+											"    });\r",
+											"    jsonData.root_folder_type.datatype_definitions.forEach(function(datatype_definition) {\r",
+											"        var fixed_name_part = datatype_definition.name;\r",
+											"        var id_var = 'datatype_definition_pick.' + fixed_name_part + \".id\";\r",
+											"        pm.collectionVariables.set(id_var, datatype_definition.id);\r",
+											"        console.log(id_var);\r",
+											"    });\r",
+											"    jsonData.roles.forEach(function(role) {\r",
+											"        var match = role.name.match(attributePrefixPattern);\r",
+											"        var fixed_name_part = match[1];\r",
+											"        var id_var = 'role_pick.' + fixed_name_part + \".id\";\r",
+											"        pm.collectionVariables.set(id_var, role.name);\r",
+											"        console.log(id_var);\r",
+											"    });\r",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{workspace-service-endpoint}}/api/v1/workspace/types/{{workspace_type_employee_pick}}",
+									"host": [
+										"{{workspace-service-endpoint}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"workspace",
+										"types",
+										"{{workspace_type_employee_pick}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
 							"name": "Add entry to picklist",
 							"request": {
-								"method": "PUT",
+								"method": "PATCH",
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"display_name_multilingual\": {\r\n        \"en\": \"EmployeePick\"\r\n    },\r\n    \"root_folder_type\": {\r\n        \"attributes\": [\r\n            {\r\n                \"id\": \"{{attribute_pick.gender.id}}\",\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Gender\"\r\n                },\r\n                \"description\": \"Gender of employee\",\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": true,\r\n                \"size\": 10,\r\n                \"data_type\": \"string\"\r\n            }\r\n        ],\r\n        \"datatype_definitions\": [\r\n            {\r\n                \"id\": \"{{datatype_definition_pick.gender_pl.id}}\",\r\n                \"name\": \"gender_pl\",\r\n                \"data_type\": \"string\",\r\n                \"picklist\": [\r\n                    {\r\n                        \"value\": \"Female\",\r\n                        \"display_name\": \"Female\"\r\n                    },\r\n                    {\r\n                        \"value\": \"Male\",\r\n                        \"display_name\": \"Male\"\r\n                    },\r\n                    {\r\n                        \"value\": \"Diverse\",\r\n                        \"display_name\": \"Diverse\"\r\n                    }\r\n                ]\r\n            }\r\n        ]\r\n    },\r\n    \"roles\": [\r\n        {\r\n            \"name\": \"manager\",\r\n            \"display_name\": \"Manager\",\r\n            \"description\": \"Manager description\"\r\n        },\r\n        {\r\n            \"name\": \"employee\",\r\n            \"display_name\": \"Employee\",\r\n            \"description\": \"Employee description\"\r\n        },\r\n        {\r\n            \"name\": \"hr_business_partner\",\r\n            \"display_name\": \"HR Business Partner\",\r\n            \"description\": \"HR Business Partner description\"\r\n        }\r\n    ],\r\n    \"permission_templates\": [\r\n        {\r\n            \"name\": \"folder_acl\",\r\n            \"description\": \"Folder ACL\",\r\n            \"permits\": [\r\n                {\r\n                    \"identity\": \"employee\",\r\n                    \"permissions\": [\r\n                        \"browse\",\r\n                        \"write\",\r\n                        \"write_content\"\r\n                    ],\r\n                    \"identity_type\": \"case_role\"\r\n                },\r\n                {\r\n                    \"identity\": \"owner\",\r\n                    \"permissions\": [\r\n                        \"browse\",\r\n                        \"write\",\r\n                        \"write_content\",\r\n                        \"read_content\"\r\n                    ],\r\n                    \"identity_type\": \"user_alias\"\r\n                }\r\n            ]\r\n        }\r\n    ],\r\n    \"workspace_type_locations\": []\r\n}",
+									"raw": "{\r\n    \"root_folder_type\": {\r\n        \"attributes\": [\r\n            {\r\n                \"id\": \"{{attribute_pick.gender.id}}\",\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Gender\",\r\n                    \"de\": \"Geschlecht\"\r\n                },\r\n                \"description_multilingual\": {\r\n                    \"en\": \"Gender of employee\",\r\n                    \"de\": \"Geschlecht des Angestellten\"\r\n                },\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": true,\r\n                \"size\": 10,\r\n                \"data_type\": \"string\",\r\n                \"localizable\": true,\r\n                \"datatype_definition\": \"gender_pl\"\r\n            }\r\n        ],\r\n        \"datatype_definitions\": [\r\n            {\r\n                \"id\": \"{{datatype_definition_pick.gender_pl.id}}\",\r\n                \"name\": \"gender_pl\",\r\n                \"data_type\": \"string\",\r\n                \"picklist\": [\r\n                    {\r\n                        \"value\": \"Female\",\r\n                        \"display_name_multilingual\": {\r\n                            \"en\": \"Female\",\r\n                            \"de\": \"Weiblich\"\r\n                        }\r\n                    },\r\n                    {\r\n                        \"value\": \"Male\",\r\n                        \"display_name_multilingual\": {\r\n                            \"en\": \"Male\",\r\n                            \"de\": \"Männlich\"\r\n                        }\r\n                    },\r\n                    {\r\n                        \"value\": \"other\",\r\n                        \"display_name_multilingual\": {\r\n                            \"en\": \"Other\",\r\n                            \"de\": \"Divers\"\r\n                        }\r\n                    }\r\n                ]\r\n            }\r\n        ]\r\n    }\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -1031,13 +1355,13 @@
 							"response": []
 						},
 						{
-							"name": "New picklist",
+							"name": "Add new picklist",
 							"request": {
-								"method": "PUT",
+								"method": "PATCH",
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"display_name_multilingual\": {\r\n        \"en\": \"EmployeePick\"\r\n    },\r\n    \"root_folder_type\": {\r\n        \"attributes\": [\r\n            {\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Job Level\"\r\n                },\r\n                \"data_type\": \"string\",\r\n                \"searchable\": true,\r\n                \"size\": 2,\r\n                \"default_value\": \"1\",\r\n                \"datatype_definition\": \"job_level_pl\"\r\n            }\r\n        ],\r\n        \"datatype_definitions\": [\r\n            {\r\n                \"name\": \"job_level_pl\",\r\n                \"data_type\": \"string\",\r\n                \"picklist\": [\r\n                    {\r\n                        \"value\": \"1\",\r\n                        \"display_name\": \"Associate\"\r\n                    },\r\n                    {\r\n                        \"value\": \"2\",\r\n                        \"display_name\": \"Senior\"\r\n                    },\r\n                    {\r\n                        \"value\": \"3\",\r\n                        \"display_name\": \"Staff\"\r\n                    },\r\n                    {\r\n                        \"value\": \"4\",\r\n                        \"display_name\": \"Principal\"\r\n                    }\r\n                ]\r\n            }\r\n        ]\r\n    },\r\n    \"roles\": [\r\n        {\r\n            \"name\": \"manager\",\r\n            \"display_name\": \"Manager\",\r\n            \"description\": \"Manager description\"\r\n        },\r\n        {\r\n            \"name\": \"employee\",\r\n            \"display_name\": \"Employee\",\r\n            \"description\": \"Employee description\"\r\n        },\r\n        {\r\n            \"name\": \"hr_business_partner\",\r\n            \"display_name\": \"HR Business Partner\",\r\n            \"description\": \"HR Business Partner description\"\r\n        }\r\n    ],\r\n    \"permission_templates\": [\r\n        {\r\n            \"name\": \"folder_acl\",\r\n            \"description\": \"Folder ACL\",\r\n            \"permits\": [\r\n                {\r\n                    \"identity\": \"employee\",\r\n                    \"permissions\": [\r\n                        \"browse\",\r\n                        \"write\",\r\n                        \"write_content\"\r\n                    ],\r\n                    \"identity_type\": \"case_role\"\r\n                },\r\n                {\r\n                    \"identity\": \"owner\",\r\n                    \"permissions\": [\r\n                        \"browse\",\r\n                        \"write\",\r\n                        \"write_content\",\r\n                        \"read_content\"\r\n                    ],\r\n                    \"identity_type\": \"user_alias\"\r\n                }\r\n            ]\r\n        }\r\n    ],\r\n    \"workspace_type_locations\": []\r\n}",
+									"raw": "{\r\n    \"root_folder_type\": {\r\n        \"attributes\": [\r\n            {\r\n                \"id\": \"{{attribute_pick.gender.id}}\",\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Gender\",\r\n                    \"de\": \"Geschlecht\"\r\n                },\r\n                \"description_multilingual\": {\r\n                    \"en\": \"Gender of employee\",\r\n                    \"de\": \"Geschlecht des Angestellten\"\r\n                },\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": true,\r\n                \"size\": 10,\r\n                \"data_type\": \"string\",\r\n                \"localizable\": true,\r\n                \"datatype_definition\": \"gender_pl\"\r\n            },\r\n            {\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Job Level\",\r\n                    \"de\": \"Job Level\"\r\n                },\r\n                \"data_type\": \"string\",\r\n                \"searchable\": true,\r\n                \"size\": 2,\r\n                \"localizable\": true,\r\n                \"default_value\": \"1\",\r\n                \"datatype_definition\": \"job_level_pl\"\r\n            }\r\n        ],\r\n        \"datatype_definitions\": [\r\n            {\r\n                \"id\": \"{{datatype_definition_pick.gender_pl.id}}\",\r\n                \"name\": \"gender_pl\",\r\n                \"data_type\": \"string\",\r\n                \"picklist\": [\r\n                    {\r\n                        \"value\": \"Female\",\r\n                        \"display_name_multilingual\": {\r\n                            \"en\": \"Female\",\r\n                            \"de\": \"Weiblich\"\r\n                        }\r\n                    },\r\n                    {\r\n                        \"value\": \"Male\",\r\n                        \"display_name_multilingual\": {\r\n                            \"en\": \"Male\",\r\n                            \"de\": \"Männlich\"\r\n                        }\r\n                    },\r\n                    {\r\n                        \"value\": \"other\",\r\n                        \"display_name_multilingual\": {\r\n                            \"en\": \"Other\",\r\n                            \"de\": \"Divers\"\r\n                        }\r\n                    }\r\n                ]\r\n            },\r\n            {\r\n                \"name\": \"job_level_pl\",\r\n                \"data_type\": \"string\",\r\n                \"picklist\": [\r\n                    {\r\n                        \"value\": \"1\",\r\n                        \"display_name_multilingual\": {\r\n                            \"en\": \"Junior\"\r\n                        }\r\n                    },\r\n                    {\r\n                        \"value\": \"2\",\r\n                        \"display_name_multilingual\": {\r\n                            \"en\": \"Senior\"\r\n                        }\r\n                    },\r\n                    {\r\n                        \"value\": \"3\",\r\n                        \"display_name\": \"Staff\",\r\n                        \"display_name_multilingual\": {\r\n                            \"en\": \"Staff\"\r\n                        }\r\n                    },\r\n                    {\r\n                        \"value\": \"4\",\r\n                        \"display_name\": \"Principal\",\r\n                        \"display_name_multilingual\": {\r\n                            \"en\": \"Principal\"\r\n                        }\r\n                    }\r\n                ]\r\n            }\r\n        ]\r\n    }\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -1063,11 +1387,11 @@
 						{
 							"name": "Delete Picklist",
 							"request": {
-								"method": "PUT",
+								"method": "PATCH",
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n  \"display_name_multilingual\": {\r\n    \"en\": \"EmployeePick\"\r\n  },\r\n  \"root_folder_type\": {\r\n    \"description\": \"Root folder of Employee Workspace folders\",\r\n    \"name\": \"employee_folder\",\r\n    \"display_name\": \"Employee Workspace\",\r\n    \"attributes\": [],\r\n    \"datatype_definitions\": []\r\n  },\r\n  \"roles\": [\r\n    {\r\n      \"name\": \"manager\",\r\n      \"display_name\": \"Manager\",\r\n      \"description\": \"Manager description\"\r\n    },\r\n    {\r\n      \"name\": \"employee\",\r\n      \"display_name\": \"Employee\",\r\n      \"description\": \"Employee description\"\r\n    },\r\n    {\r\n      \"name\": \"hr_business_partner\",\r\n      \"display_name\": \"HR Business Partner\",\r\n      \"description\": \"HR Business Partner description\"\r\n    }\r\n  ],\r\n  \"workspace_type_locations\": []\r\n}",
+									"raw": "{\r\n    \"root_folder_type\": {\r\n        \"attributes\": [\r\n            {\r\n                \"id\": \"{{attribute_pick.gender.id}}\",\r\n                \"display_name_multilingual\": {\r\n                    \"en\": \"Gender\",\r\n                    \"de\": \"Geschlecht\"\r\n                },\r\n                \"description_multilingual\": {\r\n                    \"en\": \"Gender of employee\",\r\n                    \"de\": \"Geschlecht des Angestellten\"\r\n                },\r\n                \"searchable\": true,\r\n                \"sortable\": true,\r\n                \"required\": true,\r\n                \"size\": 10,\r\n                \"data_type\": \"string\",\r\n                \"localizable\": true,\r\n                \"datatype_definition\": \"gender_pl\"\r\n            }\r\n        ],\r\n        \"datatype_definitions\": [\r\n            {\r\n                \"id\": \"{{datatype_definition_pick.gender_pl.id}}\",\r\n                \"name\": \"gender_pl\",\r\n                \"data_type\": \"string\",\r\n                \"picklist\": [\r\n                    {\r\n                        \"value\": \"Female\",\r\n                        \"display_name_multilingual\": {\r\n                            \"en\": \"Female\",\r\n                            \"de\": \"Weiblich\"\r\n                        }\r\n                    },\r\n                    {\r\n                        \"value\": \"Male\",\r\n                        \"display_name_multilingual\": {\r\n                            \"en\": \"Male\",\r\n                            \"de\": \"Männlich\"\r\n                        }\r\n                    },\r\n                    {\r\n                        \"value\": \"other\",\r\n                        \"display_name_multilingual\": {\r\n                            \"en\": \"Other\",\r\n                            \"de\": \"Divers\"\r\n                        }\r\n                    }\r\n                ]\r\n            }\r\n        ]\r\n    }\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -1163,7 +1487,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"display_name_multilingual\": {\r\n        \"en\": \"Employee North America\"\r\n    },\r\n    \"case_model\": {\r\n        \"root_case_node\": {\r\n            \"display_name\": \"Employee North America\",\r\n            \"child_nodes\": [\r\n                {\r\n                    \"display_name\": \"010 Hiring & Onboarding\",\r\n                    \"child_nodes\": [\r\n                        {\r\n                            \"display_name\": \"010.010 Application and Selection\",\r\n                            \"child_nodes\": [\r\n                                {\r\n                                    \"display_name\": \"Application and Selection Documents\",\r\n                                    \"category\": \"file\",\r\n                                    \"object_type\": \"cms_file\"\r\n                                }\r\n                            ]\r\n                        },\r\n                        {\r\n                            \"display_name\": \"010.020 Onboarding\",\r\n                            \"child_nodes\": [\r\n                                {\r\n                                    \"display_name\": \"Onboarding Documents\",\r\n                                    \"category\": \"file\",\r\n                                    \"object_type\": \"cms_file\"\r\n                                }\r\n                            ]\r\n                        }\r\n                    ]\r\n                }\r\n            ]\r\n        }\r\n    }\r\n}",
+							"raw": "{\r\n    \"display_name_multilingual\": {\r\n        \"en\": \"Employee North America\"\r\n    },\r\n    \"case_model\": {\r\n        \"root_case_node\": {\r\n            \"display_name_multilingual\": {\r\n                \"en\": \"Employee North America\"\r\n            },\r\n            \"permission_template_name\": \"folder_acl\",\r\n            \"child_nodes\": [\r\n                {\r\n                    \"display_name_multilingual\": {\r\n                        \"en\": \"010 Hiring & Onboarding\"\r\n                    },\r\n                    \"child_nodes\": [\r\n                        {\r\n                            \"display_name_multilingual\": {\r\n                                \"en\": \"010.010 Application and Selection\"\r\n                            },\r\n                            \"child_nodes\": [\r\n                                {\r\n                                    \"category\": \"file\",\r\n                                    \"object_type\": \"cms_file\"\r\n                                }\r\n                            ]\r\n                        },\r\n                        {\r\n                            \"display_name_multilingual\": {\r\n                                \"en\": \"010.020 Onboarding\"\r\n                            },\r\n                            \"child_nodes\": [\r\n                                {\r\n                                    \"category\": \"file\",\r\n                                    \"object_type\": \"cms_file\"\r\n                                }\r\n                            ]\r\n                        }\r\n                    ]\r\n                }\r\n            ]\r\n        }\r\n    }\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1171,7 +1495,7 @@
 							}
 						},
 						"url": {
-							"raw": "{{workspace-service-endpoint}}/api/v1/workspace/types/{{workspace_type_employee}}/templates",
+							"raw": "{{workspace-service-endpoint}}/api/v1/workspace/types/{{workspace_type_employee}}/templates?publish=true",
 							"host": [
 								"{{workspace-service-endpoint}}"
 							],
@@ -1182,6 +1506,12 @@
 								"types",
 								"{{workspace_type_employee}}",
 								"templates"
+							],
+							"query": [
+								{
+									"key": "publish",
+									"value": "true"
+								}
 							]
 						}
 					},
@@ -1194,12 +1524,37 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"let jsonData = pm.response.json();\r",
-									"var attributePrefixPattern = /(.+)(_.{5})/;\r",
-									"pm.collectionVariables.set(\"workspace_template_employee_eu\", jsonData.name);\r",
-									"let subscription_namespace_prefix = pm.collectionVariables.get(\"subscription_namespace_prefix\");\r",
-									"console.log(\"subscription_namespace_prefix = \" + subscription_namespace_prefix);\r",
-									"pm.collectionVariables.set(\"case_model_employee_eu\", subscription_namespace_prefix + \"_\" + jsonData.case_model.name);"
+									"if(pm.response.code == '201') {\r",
+									"    let jsonData = pm.response.json();\r",
+									"    var attributePrefixPattern = /(.+)(_.{5})/;\r",
+									"    pm.collectionVariables.set(\"workspace_template_employee_eu\", jsonData.name);\r",
+									"    let subscription_namespace_prefix = pm.collectionVariables.get(\"subscription_namespace_prefix\");\r",
+									"    console.log(\"subscription_namespace_prefix = \" + subscription_namespace_prefix);\r",
+									"    pm.collectionVariables.set(\"case_model_employee_eu\", subscription_namespace_prefix + \"_\" + jsonData.case_model.name);\r",
+									"\r",
+									"    var hiring_onboarding_name = jsonData.case_model.root_case_node.child_nodes[0].name;\r",
+									"    console.log(\"hiring_onboarding_name = \" + hiring_onboarding_name);\r",
+									"    pm.collectionVariables.set(\"hiring_onboarding_name\", hiring_onboarding_name);\r",
+									"    var hiring_onboarding_path = jsonData.case_model.root_case_node.child_nodes[0].latest_published_parent_path;\r",
+									"    console.log(\"hiring_onboarding_path = \" + hiring_onboarding_path);\r",
+									"    pm.collectionVariables.set(\"hiring_onboarding_path\", hiring_onboarding_path);\r",
+									"\r",
+									"    var application_selection_name = jsonData.case_model.root_case_node.child_nodes[0].child_nodes[0].name;\r",
+									"    console.log(\"application_selection_name = \" + application_selection_name);\r",
+									"    pm.collectionVariables.set(\"application_selection_name\", application_selection_name);\r",
+									"    var application_selection_path = jsonData.case_model.root_case_node.child_nodes[0].child_nodes[0].latest_published_parent_path;\r",
+									"    console.log(\"application_selection_path = \" + application_selection_path);\r",
+									"    pm.collectionVariables.set(\"application_selection_path\", application_selection_path);\r",
+									"\r",
+									"    var application_selection_file_name = jsonData.case_model.root_case_node.child_nodes[0].child_nodes[0].child_nodes[0].name;\r",
+									"    console.log(\"application_selection_file_name = \" + application_selection_file_name);\r",
+									"    pm.collectionVariables.set(\"application_selection_file_name\", application_selection_file_name);\r",
+									"    var application_selection_file_path = jsonData.case_model.root_case_node.child_nodes[0].child_nodes[0].child_nodes[0].latest_published_parent_path;\r",
+									"    console.log(\"application_selection_file_path = \" + application_selection_file_path);\r",
+									"    pm.collectionVariables.set(\"application_selection_file_path\", application_selection_file_path);\r",
+									"\r",
+									"    \r",
+									"}"
 								],
 								"type": "text/javascript"
 							}
@@ -1210,7 +1565,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"display_name_multilingual\": {\r\n        \"en\": \"Employee Europe\"\r\n    },\r\n    \"description\": \"An Employee from Europe\",\r\n    \"case_model\": {\r\n        \"display_name\": \"Employee Europe\",\r\n        \"description\": \"Case Model of Workspace Template Employee Europe\",\r\n        \"root_case_node\": {\r\n            \"name\": \"employee_europe\",\r\n            \"display_name\": \"Employee Europe\",\r\n            \"permission_template_name\": \"folder_acl\",\r\n            \"child_nodes\": [\r\n                {\r\n                    \"name\": \"010_hiring_onboarding\",\r\n                    \"display_name\": \"010 Hiring & Onboarding\",\r\n                    \"category\": \"folder\",\r\n                    \"object_type\": \"cms_folder\",\r\n                    \"child_nodes\": [\r\n                        {\r\n                            \"name\": \"010_010_application_and_selection\",\r\n                            \"display_name\": \"010.010 Application and Selection\",\r\n                            \"category\": \"folder\",\r\n                            \"object_type\": \"cms_folder\",\r\n                            \"child_nodes\": [\r\n                                {\r\n                                    \"name\": \"application_and_selection_documents\",\r\n                                    \"display_name\": \"Application and Selection Documents\",\r\n                                    \"category\": \"file\",\r\n                                    \"object_type\": \"cms_file\"\r\n                                }\r\n                            ]\r\n                        }\r\n                    ]\r\n                }\r\n            ]\r\n        }\r\n    }\r\n}",
+							"raw": "{\r\n    \"display_name_multilingual\": {\r\n        \"en\": \"Employee Europe\",\r\n        \"de\": \"Angestellter Europa\"\r\n    },\r\n    \"description\": \"An Employee from Europe\",\r\n    \"case_model\": {\r\n        \"display_name\": \"Employee Europe\",\r\n        \"description\": \"Case Model of Workspace Template Employee Europe\",\r\n        \"root_case_node\": {\r\n            \"name\": \"employee_europe\",\r\n            \"display_name_multilingual\": {\r\n                \"en\": \"Employee Europe\",\r\n                \"de\": \"Angestellter Europa\"\r\n            },\r\n            \"permission_template_name\": \"folder_acl\",\r\n            \"child_nodes\": [\r\n                {\r\n                    \"name\": \"010_hiring_onboarding\",\r\n                    \"display_name_multilingual\": {\r\n                        \"en\": \"010 Hiring & Onboarding\",\r\n                        \"de\": \"010 Einstellung & Einarbeitung\"\r\n                    },\r\n                    \"category\": \"folder\",\r\n                    \"object_type\": \"cms_folder\",\r\n                    \"child_nodes\": [\r\n                        {\r\n                            \"name\": \"010_010_application_and_selection\",\r\n                            \"display_name_multilingual\": {\r\n                                \"en\": \"010.010 Application and Selection\",\r\n                                \"de\": \"010.010 Bewerbung und Auswahl\"\r\n                            },\r\n                            \"category\": \"folder\",\r\n                            \"object_type\": \"cms_folder\",\r\n                            \"child_nodes\": [\r\n                                {\r\n                                    \"category\": \"file\",\r\n                                    \"object_type\": \"cms_file\"\r\n                                }\r\n                            ]\r\n                        }\r\n                    ]\r\n                }\r\n            ]\r\n        }\r\n    }\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1218,7 +1573,7 @@
 							}
 						},
 						"url": {
-							"raw": "{{workspace-service-endpoint}}/api/v1/workspace/types/{{workspace_type_employee_l10n}}/templates",
+							"raw": "{{workspace-service-endpoint}}/api/v1/workspace/types/{{workspace_type_employee_l10n}}/templates?publish=true",
 							"host": [
 								"{{workspace-service-endpoint}}"
 							],
@@ -1229,6 +1584,12 @@
 								"types",
 								"{{workspace_type_employee_l10n}}",
 								"templates"
+							],
+							"query": [
+								{
+									"key": "publish",
+									"value": "true"
+								}
 							]
 						}
 					},
@@ -1252,7 +1613,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"case_model\": {\r\n        \"display_name\": \"Employee North America\",\r\n        \"description\": \"Case Model of Workspace Template Employee North America\",\r\n        \"root_case_node\": {\r\n            \"display_name\": \"Employee North America\",\r\n            \"permission_template_name\": \"folder_acl\",\r\n            \"child_nodes\": [\r\n                {\r\n                    \"display_name\": \"010 Hiring & Onboarding\",\r\n                    \"child_nodes\": [\r\n                        {\r\n                            \"display_name\": \"Hiring & Onboarding Documents\",\r\n                            \"category\": \"file\",\r\n                            \"object_type\": \"cms_file\"\r\n                        }\r\n                    ]\r\n                },\r\n                {\r\n                    \"display_name\": \"020 Personal Information\",\r\n                    \"child_nodes\": [\r\n                        {\r\n                            \"display_name\": \"Personal Information Documents\",\r\n                            \"category\": \"file\",\r\n                            \"object_type\": \"cms_file\"\r\n                        }\r\n                    ]\r\n                },\r\n                {\r\n                    \"display_name\": \"030 Employment\",\r\n                    \"child_nodes\": [\r\n                        {\r\n                            \"display_name\": \"Employment Documents\",\r\n                            \"category\": \"file\",\r\n                            \"object_type\": \"cms_file\"\r\n                        }\r\n                    ]\r\n                },\r\n                {\r\n                    \"display_name\": \"040 Employee Relations\",\r\n                    \"child_nodes\": [\r\n                        {\r\n                            \"display_name\": \"Employee Relations Documents\",\r\n                            \"category\": \"file\",\r\n                            \"object_type\": \"cms_file\"\r\n                        }\r\n                    ]\r\n                },\r\n                {\r\n                    \"display_name\": \"050 Tax and Social Security\",\r\n                    \"child_nodes\": [\r\n                        {\r\n                            \"display_name\": \"Tax and Social Security Documents\",\r\n                            \"category\": \"file\",\r\n                            \"object_type\": \"cms_file\"\r\n                        }\r\n                    ]\r\n                }\r\n            ]\r\n        }\r\n    }\r\n}",
+							"raw": "{\r\n    \"display_name_multilingual\": {\r\n        \"en\": \"Employee Europe\",\r\n        \"de\": \"Angestellter Europa\"\r\n    },\r\n    \"description\": \"An Employee from Europe\",\r\n    \"case_model\": {\r\n        \"display_name\": \"Employee Europe\",\r\n        \"description\": \"Case Model of Workspace Template Employee Europe\",\r\n        \"root_case_node\": {\r\n            \"name\": \"employee_europe\",\r\n            \"display_name_multilingual\": {\r\n                \"en\": \"Employee Europe\",\r\n                \"de\": \"Angestellter Europa\"\r\n            },\r\n            \"permission_template_name\": \"folder_acl\",\r\n            \"child_nodes\": [\r\n                {\r\n                    \"name\": \"{{hiring_onboarding_name}}\",\r\n                    \"display_name_multilingual\": {\r\n                        \"en\": \"010 Hiring & Onboarding\",\r\n                        \"de\": \"010 Einstellung & Einarbeitung\"\r\n                    },\r\n                    \"category\": \"folder\",\r\n                    \"object_type\": \"cms_folder\",\r\n                    \"latest_published_parent_path\": \"{{hiring_onboarding_path}}\",\r\n                    \"child_nodes\": [\r\n                        {\r\n                            \"name\": \"{{application_selection_name}}\",\r\n                            \"display_name_multilingual\": {\r\n                                \"en\": \"010.010 Application and Selection\",\r\n                                \"de\": \"010.010 Bewerbung und Auswahl\"\r\n                            },\r\n                            \"category\": \"folder\",\r\n                            \"object_type\": \"cms_folder\",\r\n                            \"latest_published_parent_path\": \"{{application_selection_path}}\",\r\n                            \"child_nodes\": [\r\n                                {\r\n                                    \"name\": \"{{application_selection_file_name}}\",\r\n                                    \"category\": \"file\",\r\n                                    \"object_type\": \"cms_file\",\r\n                                    \"latest_published_parent_path\": \"{{application_selection_file_path}}\"\r\n                                }\r\n                            ]\r\n                        }\r\n                    ]\r\n                },\r\n                {\r\n                    \"name\": \"020_personal_information\",\r\n                    \"display_name_multilingual\": {\r\n                        \"en\": \"020 Personal Information\",\r\n                        \"de\": \"020 Persönliche Informationen\"\r\n                    },\r\n                    \"category\": \"folder\",\r\n                    \"object_type\": \"cms_folder\",\r\n                    \"child_nodes\": [\r\n                        {\r\n                            \"category\": \"file\",\r\n                            \"object_type\": \"cms_file\"\r\n                        }\r\n                    ]\r\n                },\r\n                {\r\n                    \"name\": \"030_employment\",\r\n                    \"display_name_multilingual\": {\r\n                        \"en\": \"030 Employment\",\r\n                        \"de\": \"030 Anstellung\"\r\n                    },\r\n                    \"category\": \"folder\",\r\n                    \"object_type\": \"cms_folder\",\r\n                    \"child_nodes\": [\r\n                        {\r\n                            \"category\": \"file\",\r\n                            \"object_type\": \"cms_file\"\r\n                        }\r\n                    ]\r\n                }\r\n            ]\r\n        }\r\n    }\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1260,7 +1621,7 @@
 							}
 						},
 						"url": {
-							"raw": "{{workspace-service-endpoint}}/api/v1/workspace/types/{{workspace_type_employee}}/templates/{{workspace_template_employee_na}}",
+							"raw": "{{workspace-service-endpoint}}/api/v1/workspace/types/{{workspace_type_employee_l10n}}/templates/{{workspace_template_employee_eu}}?publish=true",
 							"host": [
 								"{{workspace-service-endpoint}}"
 							],
@@ -1269,9 +1630,15 @@
 								"v1",
 								"workspace",
 								"types",
-								"{{workspace_type_employee}}",
+								"{{workspace_type_employee_l10n}}",
 								"templates",
-								"{{workspace_template_employee_na}}"
+								"{{workspace_template_employee_eu}}"
+							],
+							"query": [
+								{
+									"key": "publish",
+									"value": "true"
+								}
 							]
 						}
 					},
@@ -1292,7 +1659,7 @@
 							}
 						},
 						"url": {
-							"raw": "{{workspace-service-endpoint}}/api/v1/workspace/types/{{workspace_type_employee_l10n}}/templates/{{workspace_template_employee_eu}}",
+							"raw": "{{workspace-service-endpoint}}/api/v1/workspace/types/{{workspace_type_employee_l10n}}/templates/{{workspace_template_employee_eu}}?publish=true",
 							"host": [
 								"{{workspace-service-endpoint}}"
 							],
@@ -1304,6 +1671,12 @@
 								"{{workspace_type_employee_l10n}}",
 								"templates",
 								"{{workspace_template_employee_eu}}"
+							],
+							"query": [
+								{
+									"key": "publish",
+									"value": "true"
+								}
 							]
 						}
 					},
@@ -1478,9 +1851,11 @@
 									"script": {
 										"exec": [
 											"let jsonData = pm.response.json();\r",
+											"var prefixPattern = /(.+)(_.{5})/;\r",
 											"jsonData._embedded[\"urn:ccm:roles\"].forEach(function(role) {\r",
 											"    var roleName = role.role_name;\r",
-											"    var id_var = 'role.' + roleName + \".id\";\r",
+											"    var match = roleName.match(prefixPattern);\r",
+											"    var id_var = 'workspaceinstance.role.' + match[1] + \".id\";\r",
 											"    pm.collectionVariables.set(id_var, role.id);\r",
 											"    console.log(id_var);\r",
 											"});"
@@ -1536,7 +1911,7 @@
 									}
 								},
 								"url": {
-									"raw": "{{workspace-service-endpoint}}/api/v1/workspace/instances/roles/{{role.employee.id}}/members",
+									"raw": "{{workspace-service-endpoint}}/api/v1/workspace/instances/roles/{{workspaceinstance.role.employee.id}}/members",
 									"host": [
 										"{{workspace-service-endpoint}}"
 									],
@@ -1546,7 +1921,7 @@
 										"workspace",
 										"instances",
 										"roles",
-										"{{role.employee.id}}",
+										"{{workspaceinstance.role.employee.id}}",
 										"members"
 									]
 								}
@@ -1570,7 +1945,7 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{workspace-service-endpoint}}/api/v1/workspace/instances/roles/{{role.employee.id}}/members/{{member_id}}",
+									"raw": "{{workspace-service-endpoint}}/api/v1/workspace/instances/roles/{{workspaceinstance.role.employee.id}}",
 									"host": [
 										"{{workspace-service-endpoint}}"
 									],
@@ -1580,9 +1955,7 @@
 										"workspace",
 										"instances",
 										"roles",
-										"{{role.employee.id}}",
-										"members",
-										"{{member_id}}"
+										"{{workspaceinstance.role.employee.id}}"
 									]
 								}
 							},
@@ -1614,7 +1987,7 @@
 									}
 								},
 								"url": {
-									"raw": "{{workspace-service-endpoint}}/api/v1/workspace/instances/roles/{{role.employee.id}}/members/{{member_id}}",
+									"raw": "{{workspace-service-endpoint}}/api/v1/workspace/instances/roles/{{workspaceinstance.role.employee.id}}/members/{{member_id}}",
 									"host": [
 										"{{workspace-service-endpoint}}"
 									],
@@ -1624,7 +1997,7 @@
 										"workspace",
 										"instances",
 										"roles",
-										"{{role.employee.id}}",
+										"{{workspaceinstance.role.employee.id}}",
 										"members",
 										"{{member_id}}"
 									]
@@ -1696,7 +2069,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n    \"root_folder\": {\r\n        \"properties\": {\r\n            \"{{attribute_l10n.first_name.name}}\": \"Kristen\",\r\n            \"{{attribute_l10n.last_name.name}}\": \"Miller\",\r\n            \"{{attribute_l10n.gender.name}}\": \"Female\"\r\n        }\r\n    }\r\n}",
+									"raw": "{\r\n    \"root_folder\": {\r\n        \"properties\": {\r\n            \"{{attribute_l10n.first_name.name}}\": \"Kristen\",\r\n            \"{{attribute_l10n.last_name.name}}\": \"Miller (modified)\",\r\n            \"{{attribute_l10n.gender.name}}\": \"Female\"\r\n        }\r\n    }\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -1988,6 +2361,64 @@
 										"folders",
 										"{{employee_folder.id}}",
 										"locations"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Relationship",
+					"item": [
+						{
+							"name": "Get Relations",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{workspace-service-endpoint}}/api/v1/workspace/instances/{{kristen_instance.root_folder.id}}/relations",
+									"host": [
+										"{{workspace-service-endpoint}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"workspace",
+										"instances",
+										"{{kristen_instance.root_folder.id}}",
+										"relations"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Add Relation",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "[\r\n    {\r\n        \"ws_lookup_filter\": \"name eq 'Kate Miller'\"\r\n    }\r\n]",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{workspace-service-endpoint}}/api/v1/workspace/instances/{{kristen_instance.root_folder.id}}/relations",
+									"host": [
+										"{{workspace-service-endpoint}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"workspace",
+										"instances",
+										"{{kristen_instance.root_folder.id}}",
+										"relations"
 									]
 								}
 							},
@@ -2341,10 +2772,19 @@
 									"    console.log(pm.collectionVariables.toJSON());\r",
 									"    pm.collectionVariables.toJSON().values.forEach(function(entry) {\r",
 									"        console.log(entry.key);\r",
-									"        if(entry.key.startsWith(\"alias.\")) {\r",
+									"        if(entry.key.startsWith(\"alias.\") || entry.key.startsWith(\"role_\") || entry.key.startsWith(\"workspaceinstance\")) {\r",
 									"            pm.collectionVariables.unset(entry.key);\r",
 									"        }\r",
 									"    });\r",
+									"\r",
+									"\tpm.collectionVariables.unset(\"hiring_onboarding_name\");\r",
+									"    pm.collectionVariables.unset(\"hiring_onboarding_path\");\r",
+									"\r",
+									"    pm.collectionVariables.unset(\"application_selection_name\");\r",
+									"    pm.collectionVariables.unset(\"application_selection_path\");\r",
+									"\r",
+									"    pm.collectionVariables.unset(\"application_selection_file_name\");\r",
+									"    pm.collectionVariables.unset(\"application_selection_file_path\");    \r",
 									"}"
 								],
 								"type": "text/javascript"

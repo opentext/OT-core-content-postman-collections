@@ -1,0 +1,295 @@
+{
+	"info": {
+		"_postman_id": "e719d039-5c2a-4074-8c63-e7e6fedb1106",
+		"name": "Core Content Workflow API",
+		"description": "Core Content Workflow API examples usage\n============================\nThis collection uses collection variables (see tab Variables). There are already some defined but with empty values. These variables depend on your environment and must be entered/adapted before executing the examples. You can create in the Developer Console an App for your tenant. If you extend the Core Content App there are two sets of OAuth clients created, called Public Client Keys and Confidential Client Keys. For this collection you need the later, Confidential Client Keys to set the value for client_id and client_secret\n\n| Variable                      | Description                                        |\n|-------------------------------|----------------------------------------------------|\n| app_confclient_id             | Client Id of your Confidential Client Keys         |\n| app_confclient_secret         | Client Secret of your Confidential Client Keys     |\n| tenant_svcacc_uid             | Tenant service account user (usually mail address) |\n| tenant_svcacc_pwd             | Corresponding password to tenant_svcacc_uid        |\n| tenant-id                     | Id of your tenant                                  |\n\nYou usually don't need to adapt the following variables.\n\n| Variable                      | Description                                        |\n|-------------------------------|----------------------------------------------------|\n| api_host                      | Central host to access OT2 APIs**                  |\n| token-endpoint                | URL of the OAuth2 authentication service**         |\n| ccm-service-endpoint          | URL of theCore Content Management service **       |\n| access_token                  | OAuth Access Token***                              |\n| subscription_name             | Subscription name                                  |\n| node-id                       | Id of the folder                                   |\n\\*\\* Usually you can leave the default value\n\n\\*\\*\\* Is retrieved via request Preparation/OAuth \n\nThe whole collections is build with the principle that the requests are executed in independently after. Both the requests depend on the Authentication request.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Authentication DEV",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(responseBody)\r",
+							"pm.collectionVariables.set(\"access_token\", jsonData.access_token)\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "{{app_confclient_secret}}",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "{{app_confclient_id}}",
+							"type": "string"
+						},
+						{
+							"key": "saveHelperData",
+							"type": "any"
+						},
+						{
+							"key": "showPassword",
+							"value": false,
+							"type": "boolean"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded"
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "username",
+							"value": "{{tenant_svcacc_uid}}",
+							"type": "text"
+						},
+						{
+							"key": "password",
+							"value": "{{tenant_svcacc_pwd}}",
+							"type": "text"
+						},
+						{
+							"key": "grant_type",
+							"value": "password",
+							"type": "text"
+						},
+						{
+							"key": "scope",
+							"value": "otds:groups metering search readwrite otds:roles subscription:{{subscription_name}}",
+							"type": "text"
+						},
+						{
+							"key": "client_data",
+							"value": "subName={{subscription_name}}",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{token-endpoint}}/oauth2/token",
+					"host": [
+						"{{token-endpoint}}"
+					],
+					"path": [
+						"oauth2",
+						"token"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET workflows",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{ccm-service-endpoint}}/v1/nodes/{{node-id}}/workflow-definitions",
+					"host": [
+						"{{ccm-service-endpoint}}"
+					],
+					"path": [
+						"v1",
+						"nodes",
+						"{{node-id}}",
+						"workflow-definitions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST call to get Workflows",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"ids\": [\r\n        \"{{node-id}}\"\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{ccm-service-endpoint}}/v1/nodes/workflow-definitions",
+					"host": [
+						"{{ccm-service-endpoint}}"
+					],
+					"path": [
+						"v1",
+						"nodes",
+						"workflow-definitions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST call to initiate workflow",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"processDefinitionKey\": \"WFD-0177caf4-d2b3-4607-a8f3-84a442e29532\",\r\n    \"name\": \"Parent-Doc type workflow 05/03/2023 2:13 PM\",\r\n    \"variables\": [\r\n        {\r\n            \"name\": \"wfd_trigger_file_id_collection\",\r\n            \"type\": \"json\",\r\n            \"value\": [\r\n                {\r\n                    \"id\": \"{{node-id}}\",\r\n                    \"name\": \"file1.pdf\",\r\n                    \"type\": \"ccm1_contractsdoctype_vpn2u\",\r\n                    \"parentFolderId\": \"7cf0dc59-df7b-493a-8ade-5a034d65de84\",\r\n                    \"ancestorFolderIds\": [\r\n                        \"78d2c524-7a37-44a6-b8ab-6b386a708404\",\r\n                        \"7cf0dc59-df7b-493a-8ade-5a034d65de84\"\r\n                    ],\r\n                    \"mimeType\": \"application/pdf\",\r\n                    \"customProperties\": {\r\n                        \"type\": \"ccm1_contractsdoctype_vpn2u\",\r\n                        \"type_id\": 144,\r\n                        \"type_name\": \"Document\",\r\n                        \"update_time\": \"2023-05-03T06:21:54.498Z\"\r\n                    }\r\n                }\r\n            ]\r\n        },\r\n        {\r\n            \"name\": \"wfd_trigger_file_category_type\",\r\n            \"type\": \"string\",\r\n            \"value\": \"ccm1_contractsdoctype_vpn2u\"\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{workflow-service-endpoint}}/v1/process-instances",
+					"host": [
+						"{{workflow-service-endpoint}}"
+					],
+					"path": [
+						"v1",
+						"process-instances"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "token-endpoint",
+			"value": "{{api_host}}/otdstenant/{{tenant-id}}",
+			"type": "default"
+		},
+		{
+			"key": "api_host",
+			"value": "https://otdsauth.ot2.opentext.com",
+			"type": "default"
+		},
+		{
+			"key": "tenant-id",
+			"value": "92a3e330-f4b2-4c26-abe7-25b390020dbc",
+			"type": "default"
+		},
+		{
+			"key": "app_confclient_id",
+			"value": "849b7dec-d817-456b-a597-790a43350f62",
+			"type": "default"
+		},
+		{
+			"key": "app_confclient_secret",
+			"value": "e2c5463b08604094a8763914731a4497",
+			"type": "default"
+		},
+		{
+			"key": "tenant_svcacc_uid",
+			"value": "kate@innovate.com",
+			"type": "default"
+		},
+		{
+			"key": "tenant_svcacc_pwd",
+			"value": "Password@123",
+			"type": "default"
+		},
+		{
+			"key": "ccm-service-endpoint",
+			"value": "https://corecontentvalidation.ot2.opentext.com/ccm",
+			"type": "default"
+		},
+		{
+			"key": "subscription_name",
+			"value": "corecontentvalidation",
+			"type": "default"
+		},
+		{
+			"key": "node-id",
+			"value": "f7520d42-5075-412c-baa9-9a2bde2a798c",
+			"type": "default"
+		},
+		{
+			"key": "access_token",
+			"value": ""
+		},
+		{
+			"key": "workflow-service-endpoint",
+			"value": "",
+			"type": "default"
+		}
+	]
+}

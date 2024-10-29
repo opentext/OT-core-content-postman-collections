@@ -244,37 +244,37 @@
 		},
 		{
 			"key": "tenant-id",
-			"value": "92a3e330-f4b2-4c26-abe7-25b390020dbc",
+			"value": "",
 			"type": "default"
 		},
 		{
 			"key": "app_confclient_id",
-			"value": "849b7dec-d817-456b-a597-790a43350f62",
+			"value": "",
 			"type": "default"
 		},
 		{
 			"key": "app_confclient_secret",
-			"value": "e2c5463b08604094a8763914731a4497",
+			"value": "",
 			"type": "default"
 		},
 		{
 			"key": "tenant_svcacc_uid",
-			"value": "kate@innovate.com",
+			"value": "",
 			"type": "default"
 		},
 		{
 			"key": "tenant_svcacc_pwd",
-			"value": "Password@123",
+			"value": "",
 			"type": "default"
 		},
 		{
 			"key": "ccm-service-endpoint",
-			"value": "https://corecontentvalidation.ot2.opentext.com/ccm",
+			"value": "",
 			"type": "default"
 		},
 		{
 			"key": "subscription_name",
-			"value": "corecontentvalidation",
+			"value": "",
 			"type": "default"
 		},
 		{
